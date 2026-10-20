@@ -314,7 +314,7 @@ quarkus_test = rule(
     test = True,
     attrs = _test_attrs(),
     doc = """\
-Internal rule — use quarkus_test() macro from @rules_quarkus//quarkus:defs.bzl instead.
+Internal rule — use quarkus_test() macro from @quarkus//:defs.bzl instead.
 
 Runs @QuarkusTest-annotated JUnit 5 tests with full Quarkus augmentation.
 At test time, the quarkifier serializes an ApplicationModel from the actual
@@ -328,7 +328,7 @@ quarkus_integration_test = rule(
     test = True,
     attrs = _test_attrs(integration = True),
     doc = """\
-Internal rule — use quarkus_integration_test() from @rules_quarkus//quarkus:defs.bzl.
+Internal rule — use quarkus_integration_test() from @quarkus//:defs.bzl.
 
 Runs @QuarkusIntegrationTest-annotated JUnit 5 tests against a packaged Fast
 JAR or native executable while retaining Quarkus test resources and Dev

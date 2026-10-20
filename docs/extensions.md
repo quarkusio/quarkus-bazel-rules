@@ -48,7 +48,7 @@ The runtime is a plain `java_library` compiled with the extension annotation pro
 ```starlark
 load("@rules_java//java:java_library.bzl", "java_library")
 load("@rules_java//java:java_plugin.bzl", "java_plugin")
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_extension_runtime")
+load("@quarkus//:defs.bzl", "quarkus_extension_runtime")
 
 java_plugin(
     name = "quarkus_processor",

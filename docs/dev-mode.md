@@ -61,7 +61,7 @@ sequenceDiagram
 
 The manifest classpath contains two categories of jars, matching Maven's `DevMojo`:
 
-1. **Dev process infrastructure** — the transitive closures of `quarkus-bootstrap-gradle-resolver`, `quarkus-bootstrap-maven-resolver`, and `quarkus-core-deployment`, resolved separately via `@rules_quarkus//deployment:core`. This matches the roots in Quarkus Gradle's `QUARKUS_BOOTSTRAP_RESOLVER_CONFIGURATION`; the Maven plugin gets the Maven resolver from its own plugin classpath. For jars that also exist on the application classpath, the `@maven` version is preferred to avoid class identity conflicts between Coursier and `rules_jvm_external` copies.
+1. **Dev process infrastructure** — the transitive closures of `quarkus-bootstrap-gradle-resolver`, `quarkus-bootstrap-maven-resolver`, and `quarkus-core-deployment`, resolved separately via `@quarkus//deployment:core`. This matches the roots in Quarkus Gradle's `QUARKUS_BOOTSTRAP_RESOLVER_CONFIGURATION`; the Maven plugin gets the Maven resolver from its own plugin classpath. For jars that also exist on the application classpath, the `@maven` version is preferred to avoid class identity conflicts between Coursier and `rules_jvm_external` copies.
 
 2. **Parent-first runtime artifacts** — runtime jars flagged as `CLASSLOADER_PARENT_FIRST` in the `ApplicationModel` (logging, Jakarta APIs, etc.).
 
@@ -104,10 +104,10 @@ The `quarkus_dev` rule manages three separate classpaths:
 | Classpath | Source | Purpose |
 |-----------|--------|---------|
 | `application_classpath` | `deps` runtime jars | Runtime deps for the ApplicationModel |
-| `deployment_classpath` | `@rules_quarkus//deployment:all` | All deployment jars for the ApplicationModel |
-| `core_deployment_classpath` | `@rules_quarkus//deployment:core` | Bootstrap resolvers and core deployment infrastructure for the dev jar manifest |
+| `deployment_classpath` | `@quarkus//deployment:all` | All deployment jars for the ApplicationModel |
+| `core_deployment_classpath` | `@quarkus//deployment:core` | Bootstrap resolvers and core deployment infrastructure for the dev jar manifest |
 
-The `@rules_quarkus//deployment` package resolves these in two Coursier phases:
+The `@quarkus//deployment` package resolves these in two Coursier phases:
 1. `coursier fetch` both Quarkus bootstrap resolvers plus `quarkus-core-deployment` → `:core` target
 2. `coursier fetch` all extension deployment GAVs → `:all` target (superset of `:core`, ~300 jars)
 
@@ -482,7 +482,7 @@ For `bazel run //pkg:app_test`, use `test_build_args` for the same purpose;
 
 ## Known Limitations
 
-- **Dependencies graph direct links**: The Dev UI "Application Dependencies" graph shows all runtime extensions as direct deps of the root node (instead of only user-declared ones like Maven does), because Bazel's flat classpath doesn't distinguish user-declared from transitive extensions ([#51](https://github.com/clementguillot/rules_quarkus/issues/51)).
+- **Dependencies graph direct links**: The Dev UI "Application Dependencies" graph shows all runtime extensions as direct deps of the root node (instead of only user-declared ones like Maven does), because Bazel's flat classpath doesn't distinguish user-declared from transitive extensions ([#51](https://github.com/quarkusio/quarkus-bazel-rules/issues/51)).
 - **Extensions panel**: The Dev UI Extensions panel doesn't work — it uses Maven resolver classes unavailable in Bazel (produces `ClassCastException` for `RemoteRepository` across classloaders).
 - **No in-process dev mode**: Always uses a separate JVM process (~2-3s startup overhead).
 - **Docker required for Dev Services**: Dev Services need Docker on the host.
@@ -491,7 +491,7 @@ For `bazel run //pkg:app_test`, use `test_build_args` for the same purpose;
 
 The Dev UI serves static resources (Vaadin web components, flag-icons, etc.) from jars in the deployment classpath. These jars contain resources under `META-INF/resources/_static/`. The `BuildTimeContentProcessor.extractJsVersionsFor()` method parses the version from the jar URL path by finding the artifact name and taking the next path segment.
 
-For this to work correctly, the `@rules_quarkus//deployment` package preserves the Maven directory structure in its symlinks (e.g., `jars/org/mvnpm/flag-icons/7.5.0/flag-icons-7.5.0.jar`). A flat `jars/filename.jar` layout would cause the version extraction to include `.jar` in the version string, producing broken URLs like `/q/_static/flag-icons/7.5.0.jar/...`.
+For this to work correctly, the `@quarkus//deployment` package preserves the Maven directory structure in its symlinks (e.g., `jars/org/mvnpm/flag-icons/7.5.0/flag-icons-7.5.0.jar`). A flat `jars/filename.jar` layout would cause the version extraction to include `.jar` in the version string, producing broken URLs like `/q/_static/flag-icons/7.5.0.jar/...`.
 
 ## Troubleshooting
 

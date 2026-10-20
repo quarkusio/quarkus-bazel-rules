@@ -2,7 +2,7 @@
 
 `rules_quarkus` provides Bazel-native rules for building and running Quarkus JVM applications. Instead of wrapping Maven/Gradle plugins, it invokes the Quarkus internal build API (`io.quarkus.deployment`) directly through a custom Java tool called the **Quarkifier**. This gives Bazel full control over caching, sandboxing, and dependency tracking.
 
-- **Module**: `com_clementguillot_rules_quarkus`
+- **Module**: `rules_quarkus`
 - **Quarkus versions**: 3.33.4 LTS, 3.40.1 LTS
 - **Version scope**: one configured Quarkus version per Bazel workspace (either `3.33.4` or `3.40.1`)
 - **Java**: 17+
@@ -17,7 +17,7 @@
 | Fast JAR as default, with every Quarkus JVM layout selectable | Keeps the recommended default while exposing Uber, mutable, legacy, and AOT JARs as ordinary Bazel targets |
 | Explicit ApplicationModel | A Bazel aspect and resolver catalogs preserve graph/workspace facts before a version-specific Java adapter applies Quarkus semantics |
 | Deployment artifact auto-resolution via descriptors + Coursier | Module extension scans locked jars for exact `deployment-artifact` coordinates and resolves their transitive graph |
-| One generated repository from module extension | Keeps generated rules, the versioned Quarkifier, model catalogs, and copied deployment artifacts under `@rules_quarkus` |
+| One generated repository from module extension | Keeps generated rules, the versioned Quarkifier, model catalogs, and copied deployment artifacts under `@quarkus` |
 | Post-processing of Fast_Jar output | Quarkus augmentation output uses raw classpath filenames; post-processing normalizes jar names, classifies boot vs main, and regenerates metadata |
 
 ## Three-Layer Architecture
@@ -70,18 +70,20 @@ graph TD
 
 The `quarkus` module extension (`quarkus/extensions.bzl`) creates a single unified repository:
 
-Current limitation: the extension consumes the first `quarkus.toolchain()` tag and creates a fixed repository name (`@rules_quarkus`). This means version selection is workspace-wide. You can choose `3.33.4` or `3.40.1` per workspace, but one workspace cannot currently build different Quarkus versions side by side.
+Current limitation: the extension consumes the first `quarkus.toolchain()` tag and creates a fixed repository name (`@quarkus`). This means version selection is workspace-wide. You can choose `3.33.4` or `3.40.1` per workspace, but one workspace cannot currently build different Quarkus versions side by side.
 
-### @rules_quarkus
+### @quarkus
 
-A single generated repository containing everything needed to build Quarkus applications:
+A single generated repository containing everything needed to build Quarkus applications.
+Users import it with `use_repo(quarkus, "quarkus")`. It cannot be named `rules_quarkus`,
+which is the module's own repository name.
 
-- **`quarkus/defs.bzl`** — public API macros (`quarkus_app`, `quarkus_test`,
+- **`defs.bzl`** — public API macros (`quarkus_app`, `quarkus_test`,
   `quarkus_integration_test`) with toolchain-specific defaults injected
   (Quarkus version, quarkifier tool path, deployment deps)
 - **`quarkifier/tool.jar`** — the quarkifier deploy jar, resolved in priority order:
   1. **Local source build** — user provides `quarkifier_source_dir`, the extension builds and symlinks the deploy jar
-  2. **GitHub release download** — fetches from `https://github.com/clementguillot/rules_quarkus/releases/`
+  2. **GitHub release download** — fetches from `https://github.com/quarkusio/quarkus-bazel-rules/releases/`
 - **`model/`** — strict runtime, deployment, and platform catalogs used by the hermetic model-assembly action
 - **`deployment/`** — deployment jars downloaded with transitive dependencies using Coursier. Extension runtime jars pinned by `maven_install.json` are scanned for `META-INF/quarkus-extension.properties`; the exact descriptor-declared deployment coordinate is resolved without artifact-name guessing. Deployment and conditional resolution import the toolchain's `platform_boms`, so artifacts reached only through extension POMs get the platform-managed versions Maven would select. Produces two `java_library` targets:
   - `:core` — transitive deps of `quarkus-core-deployment` (used for the dev jar manifest classpath)
@@ -193,7 +195,7 @@ QuarkusAppInfo = provider(
 
 ```
 rules_quarkus/
-├── MODULE.bazel                    # Module: com_clementguillot_rules_quarkus
+├── MODULE.bazel                    # Module: rules_quarkus
 ├── quarkus/
 │   ├── defs.bzl                    # Re-exports for toolchains repo
 │   ├── extensions.bzl              # Bzlmod module extension (creates 3 repos)

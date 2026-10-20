@@ -1,8 +1,8 @@
+load("@quarkus//:defs.bzl", "quarkus_app", "quarkus_test")
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "image_layer")
 load("@rules_img//img:load.bzl", "image_load")
 load("@rules_java//java:java_library.bzl", "java_library")
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_app", "quarkus_test")
 
 # buildifier: disable=out-of-order-load
 load("@rules_img_images.bzl", "image")

@@ -1,5 +1,5 @@
 {
-  "homepage": "https://github.com/clementguillot/rules_quarkus",
+  "homepage": "https://github.com/quarkusio/quarkus-bazel-rules",
   "maintainers": [
     {
       "name": "Clément Guillot",
@@ -8,7 +8,7 @@
     }
   ],
   "repository": [
-    "github:clementguillot/rules_quarkus"
+    "github:quarkusio/quarkus-bazel-rules"
   ],
   "versions": [],
   "yanked_versions": {}

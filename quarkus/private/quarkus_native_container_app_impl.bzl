@@ -272,7 +272,7 @@ Set automatically by the quarkus_app macro via select() on the host CPU.
         ),
     },
     doc = """\
-Internal rule — use quarkus_app(native_container_build=True) from @rules_quarkus//quarkus:defs.bzl.
+Internal rule — use quarkus_app(native_container_build=True) from @quarkus//:defs.bzl.
 
 Produces a Linux native binary by running native-image inside a Docker/Podman container.
 Requires Docker or Podman on the host.

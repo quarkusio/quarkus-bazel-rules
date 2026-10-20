@@ -1,4 +1,4 @@
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_app", "quarkus_java_library", "quarkus_test")
+load("@quarkus//:defs.bzl", "quarkus_app", "quarkus_java_library", "quarkus_test")
 
 quarkus_java_library(
     name = "lib",

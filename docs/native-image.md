@@ -50,7 +50,7 @@ register_toolchains("@graalvm//:jvm", "@graalvm//:sdk")
 ### 2. Add native=True to your quarkus_app
 
 ```starlark
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_app")
+load("@quarkus//:defs.bzl", "quarkus_app")
 
 java_library(
     name = "lib",
@@ -95,7 +95,7 @@ Point `quarkus_integration_test` at the generated native target to run
 `@QuarkusIntegrationTest` against the executable:
 
 ```starlark
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_integration_test")
+load("@quarkus//:defs.bzl", "quarkus_integration_test")
 
 quarkus_integration_test(
     name = "native_integration_test",

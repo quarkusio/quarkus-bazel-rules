@@ -14,8 +14,10 @@ applications. The Starlark rules invoke the Quarkus build API through the Java
   workspace are not supported.
 - Supported Bazel versions are 7, 8, and 9, with Bzlmod only.
 - Java 17 or newer is required.
-- The generated `@rules_quarkus` repository contains the public macros, the
-  version-specific Quarkifier, model catalogs, and copied deployment artifacts.
+- The module is `rules_quarkus`. Its extension generates the `@quarkus`
+  repository (`use_repo(quarkus, "quarkus")`), which contains the public macros,
+  the version-specific Quarkifier, model catalogs, and copied deployment
+  artifacts.
 
 ## Read the relevant design documentation first
 
