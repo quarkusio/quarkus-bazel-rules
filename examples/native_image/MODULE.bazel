@@ -1,8 +1,8 @@
 module(name = "native_compile")
 
-bazel_dep(name = "com_clementguillot_rules_quarkus", version = "0.0.0", dev_dependency = True)
+bazel_dep(name = "rules_quarkus", version = "0.0.0", dev_dependency = True)
 local_path_override(
-    module_name = "com_clementguillot_rules_quarkus",
+    module_name = "rules_quarkus",
     path = "../..",
 )
 
@@ -57,10 +57,10 @@ maven.install(
 )
 use_repo(maven, "maven")
 
-quarkus = use_extension("@com_clementguillot_rules_quarkus//quarkus:extensions.bzl", "quarkus")
+quarkus = use_extension("@rules_quarkus//quarkus:extensions.bzl", "quarkus")
 quarkus.toolchain(
     lock_file = "//:maven_install.json",
-    quarkifier_source_dir = "@com_clementguillot_rules_quarkus//:MODULE.bazel",
+    quarkifier_source_dir = "@rules_quarkus//:MODULE.bazel",
     quarkus_version = "3.40.1",
 )
-use_repo(quarkus, "rules_quarkus")
+use_repo(quarkus, "quarkus")

@@ -446,7 +446,7 @@
     "@@aspect_rules_lint~//lint:extensions.bzl%tools": {
       "general": {
         "bzlTransitiveDigest": "0cbU7GVT39wudRvrTxyRdSVxZUiM5n19fPcxQwOS7lQ=",
-        "usagesDigest": "268yPaElN00kXKUGhW+NwEE2eAnT/Ge6NuPhffkGabQ=",
+        "usagesDigest": "RUhpTGxr1DHqCmc6BMVhlhTVY9Lto/muAUVyVio+Atg=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},

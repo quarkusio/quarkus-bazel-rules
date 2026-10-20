@@ -15,8 +15,8 @@ _RULES_VERSION = "$Format:%(describe:tags=true)$"
 RULES_VERSION = "0.0.0" if _RULES_VERSION.startswith("$Format") else _RULES_VERSION.replace("v", "", 1)
 
 # GitHub repository for downloading the quarkifier deploy jar from releases.
-GITHUB_OWNER = "clementguillot"
-GITHUB_REPO = "rules_quarkus"
+GITHUB_OWNER = "quarkusio"
+GITHUB_REPO = "quarkus-bazel-rules"
 
 # SHA-256 checksums of the per-minor quarkifier release jars, keyed by minor
 # version (e.g. "3.33").

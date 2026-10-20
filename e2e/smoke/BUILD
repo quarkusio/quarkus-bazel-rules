@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
-load("@com_clementguillot_rules_quarkus//quarkus:defs.bzl", "quarkus_native_app_rule")
+load("@quarkus//:defs.bzl", "quarkus_app", "quarkus_integration_test", "quarkus_java_library", "quarkus_test")
 load("@rules_java//java:java_library.bzl", "java_library")
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_app", "quarkus_integration_test", "quarkus_java_library", "quarkus_test")
+load("@rules_quarkus//quarkus:defs.bzl", "quarkus_native_app_rule")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load(":assert_junit_xml.bzl", "assert_junit_xml_test")
 load(":expect_test_failure.bzl", "expect_test_failure_test")
@@ -165,16 +165,16 @@ quarkus_app(
 quarkus_native_app_rule(
     name = "native_properties_native",
     build_properties = _NATIVE_BUILD_PROPERTIES,
-    conditional_catalog = "@rules_quarkus//model:conditional-catalog-v1.json",
-    conditional_deps = "@rules_quarkus//conditional:all",
-    deployment_artifacts = "@rules_quarkus//deployment:artifacts",
-    deployment_catalog = "@rules_quarkus//model:deployment-catalog-v1.json",
-    deployment_deps = "@rules_quarkus//deployment:all",
-    platform_catalog = "@rules_quarkus//model:platform-catalog-v1.json",
-    platform_properties = "@rules_quarkus//model:platform_properties",
-    quarkifier_tool = "@rules_quarkus//quarkifier:tool.jar",
+    conditional_catalog = "@quarkus//model:conditional-catalog-v1.json",
+    conditional_deps = "@quarkus//conditional:all",
+    deployment_artifacts = "@quarkus//deployment:artifacts",
+    deployment_catalog = "@quarkus//model:deployment-catalog-v1.json",
+    deployment_deps = "@quarkus//deployment:all",
+    platform_catalog = "@quarkus//model:platform-catalog-v1.json",
+    platform_properties = "@quarkus//model:platform_properties",
+    quarkifier_tool = "@quarkus//quarkifier:tool.jar",
     quarkus_version = "3.40.1",
-    runtime_catalog = "@rules_quarkus//model:runtime-catalog-v1.json",
+    runtime_catalog = "@quarkus//model:runtime-catalog-v1.json",
     tags = ["manual"],
     version = "1.0.0-SNAPSHOT",
     deps = [":lib"],

@@ -20,7 +20,7 @@ bazel_dep(name = "rules_java", version = "9.6.1")
 bazel_dep(name = "rules_jvm_external", version = "6.10")
 
 # Quarkus rules
-bazel_dep(name = "com_clementguillot_rules_quarkus", version = "0.1.0")
+bazel_dep(name = "rules_quarkus", version = "0.1.0")
 ```
 
 ## 2. Declare Maven Dependencies
@@ -55,14 +55,14 @@ management.
 
 ```starlark
 quarkus = use_extension(
-    "@com_clementguillot_rules_quarkus//quarkus:extensions.bzl",
+    "@rules_quarkus//quarkus:extensions.bzl",
     "quarkus",
 )
 quarkus.toolchain(
     quarkus_version = "3.40.1",
     lock_file = "//:maven_install.json",
 )
-use_repo(quarkus, "rules_quarkus")
+use_repo(quarkus, "quarkus")
 ```
 
 The `lock_file` identifies the exact runtime jars to scan. For every jar carrying
@@ -110,7 +110,7 @@ java_library(
 ### quarkus_app for the runnable application
 
 ```starlark
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_app")
+load("@quarkus//:defs.bzl", "quarkus_app")
 
 quarkus_app(
     name = "helloworld",
@@ -290,7 +290,7 @@ in a separate process while JUnit runs in the Bazel test process:
 
 ```starlark
 load(
-    "@rules_quarkus//quarkus:defs.bzl",
+    "@quarkus//:defs.bzl",
     "quarkus_integration_test",
 )
 
@@ -423,7 +423,7 @@ workflow.
 | `native` | `bool` | `False` | Also create `<name>_native` using `rules_graalvm` |
 | `native_container_build` | `bool` | `False` | Also create `<name>_native` using Docker or Podman |
 
-The `quarkus_version`, `quarkifier_tool`, and `deployment_deps` attributes are injected automatically by the `@rules_quarkus//quarkus:defs.bzl` macros.
+The `quarkus_version`, `quarkifier_tool`, and `deployment_deps` attributes are injected automatically by the `@quarkus//:defs.bzl` macros.
 
 ## Multi-Module Projects
 
@@ -457,9 +457,9 @@ This is the full `MODULE.bazel` from the `examples/helloworld_3_40` workspace:
 ```starlark
 module(name = "helloworld_3_40")
 
-bazel_dep(name = "com_clementguillot_rules_quarkus", version = "0.0.0", dev_dependency = True)
+bazel_dep(name = "rules_quarkus", version = "0.0.0", dev_dependency = True)
 local_path_override(
-    module_name = "com_clementguillot_rules_quarkus",
+    module_name = "rules_quarkus",
     path = "../..",
 )
 
@@ -486,10 +486,10 @@ maven.install(
 )
 use_repo(maven, "maven")
 
-quarkus = use_extension("@com_clementguillot_rules_quarkus//quarkus:extensions.bzl", "quarkus")
+quarkus = use_extension("@rules_quarkus//quarkus:extensions.bzl", "quarkus")
 quarkus.toolchain(
     lock_file = "//:maven_install.json",
     quarkus_version = "3.40.1",
 )
-use_repo(quarkus, "rules_quarkus")
+use_repo(quarkus, "quarkus")
 ```

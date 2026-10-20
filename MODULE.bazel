@@ -1,7 +1,7 @@
 "Bazel dependencies"
 
 module(
-    name = "com_clementguillot_rules_quarkus",
+    name = "rules_quarkus",
     version = "",
 )
 
