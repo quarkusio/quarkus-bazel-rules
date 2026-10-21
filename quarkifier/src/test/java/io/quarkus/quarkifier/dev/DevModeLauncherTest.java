@@ -1,0 +1,310 @@
+package io.quarkus.quarkifier.dev;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import io.quarkus.bootstrap.app.QuarkusBootstrap;
+import io.quarkus.bootstrap.model.ApplicationModel;
+import io.quarkus.bootstrap.model.ApplicationModelBuilder;
+import io.quarkus.maven.dependency.DependencyFlags;
+import io.quarkus.maven.dependency.ResolvedDependencyBuilder;
+import io.quarkus.quarkifier.QuarkifierConfig;
+import io.quarkus.quarkifier.TestQuarkifierConfig;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+/** Unit tests for {@link DevModeLauncher#buildDevModeContext}. */
+class DevModeLauncherTest {
+
+  /** Builds a dev-mode config from the baseline flags plus {@code extraArgs}. */
+  private static QuarkifierConfig devConfig(String... extraArgs) {
+    return config("dev", extraArgs);
+  }
+
+  /** Builds a console continuous-test config from the baseline flags plus {@code extraArgs}. */
+  private static QuarkifierConfig continuousTestConfig(String... extraArgs) {
+    return config("continuous-test", extraArgs);
+  }
+
+  private static QuarkifierConfig config(String mode, String... extraArgs) {
+    var args =
+        new ArrayList<>(
+            List.of(
+                "--application-classpath", "app.jar",
+                "--application-model", "model.json",
+                "--output-dir", "/tmp/output",
+                "--mode", mode,
+                "--app-name", "my-app"));
+    args.addAll(List.of(extraArgs));
+    return TestQuarkifierConfig.parse(args.toArray(String[]::new));
+  }
+
+  @Test
+  void buildDevModeContext_withSourceDirs_setsSourcePaths() {
+    var sourceDirs = List.of(Path.of("src/main/java"), Path.of("lib/src/main/java"));
+    var config = devConfig("--source-dirs", "src/main/java,lib/src/main/java");
+
+    var context = DevModeLauncher.buildDevModeContext(config);
+
+    assertNotNull(context.getApplicationRoot());
+    var actualPaths =
+        context.getApplicationRoot().getMain().getSourcePaths().stream()
+            .collect(Collectors.toSet());
+    var expectedPaths = sourceDirs.stream().map(Path::toAbsolutePath).collect(Collectors.toSet());
+    assertEquals(expectedPaths.size(), actualPaths.size());
+    for (Path expected : expectedPaths) {
+      assertTrue(
+          actualPaths.stream().anyMatch(p -> p.toAbsolutePath().equals(expected)),
+          "Expected source path " + expected + " not found in " + actualPaths);
+    }
+  }
+
+  @Test
+  void buildDevModeContext_withoutSourceDirs_emptySourcePaths() {
+    var context = DevModeLauncher.buildDevModeContext(devConfig());
+
+    assertNotNull(context.getApplicationRoot());
+    var sourcePaths = context.getApplicationRoot().getMain().getSourcePaths();
+    assertTrue(
+        sourcePaths == null || !sourcePaths.iterator().hasNext(),
+        "Expected empty source paths but got: " + sourcePaths);
+    assertEquals(QuarkusBootstrap.Mode.DEV, context.getMode());
+    assertNotNull(context.getProjectDir());
+  }
+
+  @Test
+  void buildDevModeContext_abortOnFailedStart_alwaysTrue() {
+    assertTrue(DevModeLauncher.buildDevModeContext(devConfig()).isAbortOnFailedStart());
+  }
+
+  @Test
+  void buildDevModeContext_localProjectDiscovery_alwaysFalse() {
+    var context = DevModeLauncher.buildDevModeContext(devConfig("--source-dirs", "src/main/java"));
+
+    assertFalse(context.isLocalProjectDiscovery());
+  }
+
+  @Test
+  void buildDevModeContext_includesDeclaredBuildProperties(@TempDir Path tempDir) throws Exception {
+    Path propertiesFile = tempDir.resolve("build.properties");
+    Files.writeString(
+        propertiesFile, "smoke.ext.prefix=Declared\nquarkus.package.jar.type=legacy-jar\n");
+
+    var context =
+        DevModeLauncher.buildDevModeContext(
+            devConfig("--build-properties-file", propertiesFile.toString()));
+
+    assertEquals("Declared", context.getBuildSystemProperties().get("smoke.ext.prefix"));
+    assertEquals("fast-jar", context.getBuildSystemProperties().get("quarkus.package.jar.type"));
+  }
+
+  @Test
+  void buildDevModeContext_mainClassFlagOverridesDeclaredProperty(@TempDir Path tempDir)
+      throws Exception {
+    Path propertiesFile = tempDir.resolve("build.properties");
+    Files.writeString(propertiesFile, "quarkus.package.main-class=wrong.Main\n");
+
+    var context =
+        DevModeLauncher.buildDevModeContext(
+            devConfig(
+                "--build-properties-file",
+                propertiesFile.toString(),
+                "--main-class",
+                "example.Main"));
+
+    assertEquals(
+        "example.Main", context.getBuildSystemProperties().get("quarkus.package.main-class"));
+  }
+
+  @Test
+  void buildDevModeContext_fallsBackToOutputDir_whenWorkspaceDirNull() {
+    var config = devConfig("--source-dirs", "src/main/java");
+
+    var context = DevModeLauncher.buildDevModeContext(config);
+
+    assertEquals("my-app", context.getBaseName());
+    // Falls back to outputDir when workspaceDir is null
+    assertEquals(config.outputDir().toAbsolutePath().toFile(), context.getProjectDir());
+    assertEquals(
+        config.outputDir().resolve("target").toAbsolutePath().toString(),
+        context.getApplicationRoot().getTargetDir());
+    assertEquals(
+        config.outputDir().toAbsolutePath().toString(),
+        context.getApplicationRoot().getProjectDirectory());
+  }
+
+  @Test
+  void buildDevModeContext_setsProjectDir_fromWorkspaceDir() {
+    var workspaceDir = Path.of("/home/user/project");
+    var config =
+        devConfig("--source-dirs", "src/main/java", "--workspace-dir", "/home/user/project");
+
+    var context = DevModeLauncher.buildDevModeContext(config);
+
+    assertEquals(workspaceDir.toAbsolutePath().toFile(), context.getProjectDir());
+    assertEquals(
+        workspaceDir.toAbsolutePath().toString(),
+        context.getApplicationRoot().getProjectDirectory());
+  }
+
+  @Test
+  void buildDevModeContext_setsTargetDir_asSubdirOfWorkspaceDir() {
+    var workspaceDir = Path.of("/home/user/project");
+    var config =
+        devConfig("--source-dirs", "src/main/java", "--workspace-dir", "/home/user/project");
+
+    var context = DevModeLauncher.buildDevModeContext(config);
+
+    assertEquals(
+        workspaceDir.resolve("target").toAbsolutePath().toString(),
+        context.getApplicationRoot().getTargetDir());
+  }
+
+  @Test
+  void buildDevModeContext_withClassesDir_usesClassesDirForClassesPath() {
+    var classesDir = Path.of("/tmp/mutable-classes");
+    var config =
+        devConfig(
+            "--source-dirs", "src/main/java",
+            "--classes-dir", "/tmp/mutable-classes",
+            "--bazel-targets", "//pkg:lib");
+
+    var context = DevModeLauncher.buildDevModeContext(config);
+
+    assertEquals(
+        classesDir.toAbsolutePath().toString(),
+        context.getApplicationRoot().getMain().getClassesPath());
+    assertEquals(
+        List.of(Path.of("src/main/java")),
+        context.getApplicationRoot().getMain().getSourcePaths().stream().toList(),
+        "ordinary dev mode exposes only workspace source roots to Quarkus");
+  }
+
+  @Test
+  void buildDevModeContext_withoutClassesDir_usesAppJarForClassesPath() {
+    var context = DevModeLauncher.buildDevModeContext(devConfig("--source-dirs", "src/main/java"));
+
+    assertEquals(
+        Path.of("app.jar").toAbsolutePath().toString(),
+        context.getApplicationRoot().getMain().getClassesPath());
+  }
+
+  @Test
+  void buildDevModeContext_withConsoleContinuousTesting_usesTestModeEntryPoint() {
+    var context =
+        DevModeLauncher.buildDevModeContext(
+            continuousTestConfig("--test-classes-dir", "/tmp/test-classes"));
+
+    assertEquals(QuarkusBootstrap.Mode.CONTINUOUS_TEST, context.getMode());
+    assertEquals(
+        io.quarkus.deployment.dev.IsolatedTestModeMain.class.getName(),
+        context.getAlternateEntryPoint());
+  }
+
+  @Test
+  void buildDevModeContext_withConsoleContinuousTesting_setsTestModuleMetadata() {
+    assertTestModuleMetadata(
+        continuousTestConfig(
+            "--test-classes-dir", "/tmp/test-classes",
+            "--test-classes-output-dirs", "bazel-bin/test.jar"));
+  }
+
+  @Test
+  void buildDevModeContext_withDevUiContinuousTesting_setsTestModuleMetadata() {
+    assertTestModuleMetadata(
+        devConfig(
+            "--test-application-model", "test-model.json",
+            "--test-classes-dir", "/tmp/test-classes",
+            "--test-classes-output-dirs", "bazel-bin/test.jar"));
+  }
+
+  private static void assertTestModuleMetadata(QuarkifierConfig config) {
+    var module = DevModeLauncher.buildDevModeContext(config).getApplicationRoot();
+    var test = module.getTest().orElseThrow();
+
+    assertEquals(Path.of("/tmp/test-classes").toAbsolutePath().toString(), test.getClassesPath());
+    assertEquals(
+        List.of(config.continuousTesting().reloadNotificationDir()),
+        test.getSourcePaths().stream().toList());
+    assertTrue(test.getResourcePaths().isEmpty(), "Quarkus must not copy workspace resources");
+    assertTrue(
+        module.getMain().getSourcePaths().isEmpty(), "Quarkus must not compile workspace sources");
+    assertTrue(module.getMain().getResourcePaths().isEmpty());
+    assertEquals(
+        Path.of("/tmp/test-classes").toAbsolutePath().toString(), test.getResourcesOutputPath());
+  }
+
+  @Test
+  void buildDevModeContext_withDevUiContinuousTestingKeepsDevEntryPoint() {
+    var config =
+        devConfig(
+            "--test-application-model", "test-model.json",
+            "--test-classes-dir", "/tmp/test-classes");
+    var context = DevModeLauncher.buildDevModeContext(config);
+    assertEquals(QuarkusBootstrap.Mode.DEV, context.getMode());
+    assertNull(context.getAlternateEntryPoint());
+  }
+
+  /**
+   * Regression: collectParentFirstRuntimeJars must return jars flagged CLASSLOADER_PARENT_FIRST
+   * even though dep.getKey() has type="jar" (GACT strict equals).
+   */
+  @Test
+  void collectParentFirstRuntimeJars_returnsParentFirstJar_despiteGactTypeMismatch() {
+    // Jar path that MavenCoordinateParser can parse: uses a dot-segment as stop marker
+    // so the parser identifies the groupId correctly
+    Path parentFirstJar =
+        Path.of("/cache/v1.repo/org/example/parent-first-lib/1.0/parent-first-lib-1.0.jar");
+    Path regularJar = Path.of("/cache/v1.repo/org/example/regular-lib/2.0/regular-lib-2.0.jar");
+    // Core classpath uses a different jar so parent-first isn't excluded
+    Path coreJar = Path.of("/cache/v1.repo/io/quarkus/quarkus-core/3.40.1/quarkus-core-3.40.1.jar");
+
+    var config =
+        devConfig(
+            "--application-classpath",
+            regularJar.toString(),
+            "--core-deployment-classpath",
+            coreJar.toString());
+
+    // Build model with one dep flagged CLASSLOADER_PARENT_FIRST (type="jar" as in production)
+    var modelBuilder = new ApplicationModelBuilder();
+    modelBuilder.setAppArtifact(
+        ResolvedDependencyBuilder.newInstance()
+            .setGroupId("com.example")
+            .setArtifactId("app")
+            .setVersion("1.0")
+            .setType("jar")
+            .setRuntimeCp()
+            .setDeploymentCp());
+    var parentFirstDep =
+        ResolvedDependencyBuilder.newInstance()
+            .setGroupId("org.example")
+            .setArtifactId("parent-first-lib")
+            .setVersion("1.0")
+            .setType("jar")
+            .setResolvedPath(parentFirstJar)
+            .setFlags(DependencyFlags.CLASSLOADER_PARENT_FIRST)
+            .setRuntimeCp()
+            .setDeploymentCp();
+    modelBuilder.addDependency(parentFirstDep);
+    modelBuilder.addParentFirstArtifact(parentFirstDep.getKey());
+    modelBuilder.addDependency(
+        ResolvedDependencyBuilder.newInstance()
+            .setGroupId("org.example")
+            .setArtifactId("regular-lib")
+            .setVersion("2.0")
+            .setType("jar")
+            .setResolvedPath(regularJar)
+            .setRuntimeCp()
+            .setDeploymentCp());
+    ApplicationModel model = modelBuilder.build();
+
+    List<Path> result = DevModeLauncher.collectParentFirstRuntimeJars(config, model);
+
+    assertEquals(List.of(parentFirstJar), result);
+  }
+}

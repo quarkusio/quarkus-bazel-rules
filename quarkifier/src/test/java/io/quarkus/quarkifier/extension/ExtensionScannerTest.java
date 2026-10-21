@@ -1,0 +1,168 @@
+package io.quarkus.quarkifier.extension;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+/** Unit tests for {@link ExtensionScanner}. */
+class ExtensionScannerTest {
+
+  @Test
+  void parseDeploymentArtifact_standardGav() {
+    var props = new Properties();
+    props.setProperty(
+        "deployment-artifact", "io.quarkus:quarkus-resteasy-reactive-deployment:3.40.1");
+    Path jar = Path.of("dummy.jar");
+
+    ExtensionInfo info = ExtensionScanner.parseDeploymentArtifact(props, jar);
+
+    assertNotNull(info);
+    assertEquals("io.quarkus", info.groupId());
+    assertEquals("quarkus-resteasy-reactive", info.artifactId());
+    assertEquals("3.40.1", info.version());
+    assertEquals(jar, info.sourceJar());
+    assertEquals(
+        "io.quarkus:quarkus-resteasy-reactive-deployment:3.40.1", info.deploymentArtifact());
+  }
+
+  @Test
+  void parseDeploymentArtifact_missingProperty() {
+    assertNull(ExtensionScanner.parseDeploymentArtifact(new Properties(), Path.of("x.jar")));
+  }
+
+  @Test
+  void parseDeploymentArtifact_blankValue() {
+    var props = new Properties();
+    props.setProperty("deployment-artifact", "   ");
+    assertNull(ExtensionScanner.parseDeploymentArtifact(props, Path.of("x.jar")));
+  }
+
+  @Test
+  void parseDeploymentArtifact_malformedGav() {
+    var props = new Properties();
+    props.setProperty("deployment-artifact", "io.quarkus:only-two-parts");
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> ExtensionScanner.parseDeploymentArtifact(props, Path.of("x.jar")));
+  }
+
+  @Test
+  void parseDeploymentArtifact_noDeploymentSuffix() {
+    var props = new Properties();
+    props.setProperty("deployment-artifact", "com.example:my-extension:1.0.0");
+
+    ExtensionInfo info = ExtensionScanner.parseDeploymentArtifact(props, Path.of("x.jar"));
+
+    assertNotNull(info);
+    assertEquals("com.example", info.groupId());
+    assertEquals("my-extension", info.artifactId());
+    assertEquals("1.0.0", info.version());
+  }
+
+  @Test
+  void parseDeploymentArtifact_extraGavParts() {
+    var props = new Properties();
+    props.setProperty(
+        "deployment-artifact", "io.quarkus:quarkus-arc-deployment:special:jar:3.40.1");
+
+    ExtensionInfo info = ExtensionScanner.parseDeploymentArtifact(props, Path.of("x.jar"));
+
+    assertNotNull(info);
+    assertEquals("io.quarkus", info.groupId());
+    assertEquals("quarkus-arc", info.artifactId());
+    assertEquals("3.40.1", info.version());
+    assertEquals("io.quarkus:quarkus-arc-deployment:special:jar:3.40.1", info.deploymentArtifact());
+  }
+
+  @Test
+  void parseDescriptor_preservesResolverRuntimeIdentityAndConditionalMetadata() {
+    var props = new Properties();
+    props.setProperty("deployment-artifact", "custom.group:unrelated-build-steps:special:jar:9.1");
+    props.setProperty(
+        "conditional-dependencies", "custom.group:feature:9.1  custom.group:nested:zip:9.1");
+    props.setProperty("conditional-dev-dependencies", "custom.group:dev-helper:9.1");
+    props.setProperty("dependency-condition", "custom.group:trigger custom.group:typed::zip");
+
+    ExtensionInfo info =
+        ExtensionScanner.parseDescriptor(
+            props, Path.of("runtime.jar"), "custom.group:actual-runtime:tests:jar:9.1");
+
+    assertNotNull(info);
+    assertEquals("custom.group", info.groupId());
+    assertEquals("actual-runtime", info.artifactId());
+    assertEquals("9.1", info.version());
+    assertEquals("custom.group:actual-runtime:tests:jar:9.1", info.runtimeArtifact());
+    assertEquals(
+        List.of("custom.group:feature:9.1", "custom.group:nested:zip:9.1"),
+        info.conditionalDependencies());
+    assertEquals(List.of("custom.group:dev-helper:9.1"), info.conditionalDevDependencies());
+    assertEquals(
+        List.of("custom.group:trigger", "custom.group:typed::zip"), info.dependencyConditions());
+  }
+
+  @Test
+  void scan_withExtensionJar(@TempDir Path tempDir) throws IOException {
+    Path jar = createExtensionJar(tempDir, "ext.jar", "io.quarkus:quarkus-arc-deployment:3.40.1");
+
+    List<ExtensionInfo> results = ExtensionScanner.scan(List.of(jar));
+
+    assertEquals(1, results.size());
+    assertEquals("quarkus-arc", results.get(0).artifactId());
+  }
+
+  @Test
+  void scan_withNonExtensionJar(@TempDir Path tempDir) throws IOException {
+    Path jar = createPlainJar(tempDir, "plain.jar");
+    assertEquals(0, ExtensionScanner.scan(List.of(jar)).size());
+  }
+
+  @Test
+  void scan_emptyClasspath() throws IOException {
+    assertEquals(0, ExtensionScanner.scan(List.of()).size());
+  }
+
+  @Test
+  void scan_mixedJars(@TempDir Path tempDir) throws IOException {
+    Path ext1 = createExtensionJar(tempDir, "ext1.jar", "io.quarkus:quarkus-arc-deployment:3.40.1");
+    Path plain = createPlainJar(tempDir, "plain.jar");
+    Path ext2 =
+        createExtensionJar(
+            tempDir, "ext2.jar", "io.quarkus:quarkus-resteasy-reactive-deployment:3.40.1");
+
+    List<ExtensionInfo> results = ExtensionScanner.scan(List.of(ext1, plain, ext2));
+
+    assertEquals(2, results.size());
+    assertEquals("quarkus-arc", results.get(0).artifactId());
+    assertEquals("quarkus-resteasy-reactive", results.get(1).artifactId());
+  }
+
+  // --- helpers ---
+
+  private static Path createExtensionJar(Path dir, String name, String gav) throws IOException {
+    Path jarPath = dir.resolve(name);
+    try (var jos = new JarOutputStream(new FileOutputStream(jarPath.toFile()))) {
+      jos.putNextEntry(new JarEntry("META-INF/quarkus-extension.properties"));
+      jos.write(("deployment-artifact=" + gav + "\n").getBytes());
+      jos.closeEntry();
+    }
+    return jarPath;
+  }
+
+  private static Path createPlainJar(Path dir, String name) throws IOException {
+    Path jarPath = dir.resolve(name);
+    try (var jos = new JarOutputStream(new FileOutputStream(jarPath.toFile()))) {
+      jos.putNextEntry(new JarEntry("META-INF/MANIFEST.MF"));
+      jos.write("Manifest-Version: 1.0\n".getBytes());
+      jos.closeEntry();
+    }
+    return jarPath;
+  }
+}

@@ -21,7 +21,7 @@ rules_quarkus/
 ├── quarkifier/               # Java augmentation tool
 │   ├── BUILD.bazel           # Build targets (lib, binary, tests)
 │   └── src/
-│       ├── main/java/com/clementguillot/quarkifier/
+│       ├── main/java/io/quarkus/quarkifier/
 │       │   ├── QuarkifierLauncher.java
 │       │   ├── QuarkifierConfig.java
 │       │   ├── augmentation/AugmentationExecutor.java
@@ -32,7 +32,7 @@ rules_quarkus/
 │       │   └── ...
 │       ├── main/resources_3_33/  # Targeted Quarkus version for the 3.33 jar
 │       ├── main/resources_3_40/  # Targeted Quarkus version for the 3.40 jar
-│       └── test/java/com/clementguillot/quarkifier/
+│       └── test/java/io/quarkus/quarkifier/
 │           ├── QuarkifierConfigPropertyTest.java   # Property-based test
 │           ├── TestDataGenerator.java              # Random data for PBTs
 │           └── ...

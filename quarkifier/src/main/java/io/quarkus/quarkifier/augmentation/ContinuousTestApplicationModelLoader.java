@@ -1,0 +1,59 @@
+package io.quarkus.quarkifier.augmentation;
+
+import io.quarkus.bootstrap.model.ApplicationModel;
+import io.quarkus.quarkifier.AugmentationException;
+import io.quarkus.quarkifier.AugmentationMode;
+import io.quarkus.quarkifier.QuarkifierConfig;
+import io.quarkus.quarkifier.model.ExplicitApplicationModelBuilder;
+import io.quarkus.quarkifier.model.transport.BazelApplicationModel;
+import io.quarkus.quarkifier.model.transport.BazelApplicationModelReader;
+
+/** Loads the secondary TEST model used by Dev UI continuous testing. */
+final class ContinuousTestApplicationModelLoader {
+
+  private ContinuousTestApplicationModelLoader() {}
+
+  static ApplicationModel load(QuarkifierConfig config, BazelApplicationModel applicationModel)
+      throws Exception {
+    if (config.continuousTesting() == null) {
+      return null;
+    }
+    if (config.continuousTesting().applicationModel() == null) {
+      // QuarkifierConfig already rejects this pairing; never fall back to the DEV model.
+      throw new AugmentationException(
+          "Dev UI continuous testing requires a secondary TEST application model");
+    }
+    var explicitModel =
+        BazelApplicationModelReader.read(config.continuousTesting().applicationModel());
+    AugmentationExecutor.validateModelCompatibility(AugmentationMode.TEST, explicitModel);
+    validateRelationship(applicationModel, explicitModel);
+    return ExplicitApplicationModelBuilder.build(explicitModel);
+  }
+
+  static void validateRelationship(
+      BazelApplicationModel applicationModel, BazelApplicationModel testModel)
+      throws AugmentationException {
+    BazelApplicationModel.Node devApplication = applicationNode(applicationModel, "Dev");
+    BazelApplicationModel.Node testApplication = applicationNode(testModel, "Continuous-test");
+    if (!devApplication.id().equals(testApplication.id())
+        || !devApplication.bazelLabel().equals(testApplication.bazelLabel())) {
+      throw new AugmentationException(
+          "Continuous-test model application '"
+              + testApplication.bazelLabel()
+              + "' does not match dev application '"
+              + devApplication.bazelLabel()
+              + "'");
+    }
+  }
+
+  private static BazelApplicationModel.Node applicationNode(
+      BazelApplicationModel model, String description) throws AugmentationException {
+    return model.nodes().stream()
+        .filter(node -> node.id().equals(model.applicationId()))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new AugmentationException(
+                    description + " model application node is missing: " + model.applicationId()));
+  }
+}

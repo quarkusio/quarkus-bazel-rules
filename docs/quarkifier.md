@@ -1,8 +1,8 @@
 # Quarkifier Tool Reference
 
-The Quarkifier (`com.clementguillot.quarkifier`) is a standalone Java tool that invokes the Quarkus internal build API (`io.quarkus.deployment`) to perform build-time augmentation. It is the core engine behind `rules_quarkus`.
+The Quarkifier (`io.quarkus.quarkifier`) is a standalone Java tool that invokes the Quarkus internal build API (`io.quarkus.deployment`) to perform build-time augmentation. It is the core engine behind `rules_quarkus`.
 
-- **Main class**: `com.clementguillot.quarkifier.QuarkifierLauncher`
+- **Main class**: `io.quarkus.quarkifier.QuarkifierLauncher`
 - **Built against**: Quarkus 3.33.4 LTS and 3.40.1 LTS
 
 ## CLI Interface
@@ -129,7 +129,7 @@ user-supplied `artifact` is preserved, matching the Quarkus Maven/Gradle plugins
 ## Package Structure
 
 ```
-com.clementguillot.quarkifier
+io.quarkus.quarkifier
 ├── QuarkifierLauncher              Entry point (thin shell, delegates to picocli)
 ├── QuarkifierCommand               Top-level picocli command dispatcher
 ├── AugmentationCommand             Parses augmentation options and executes the pipeline
