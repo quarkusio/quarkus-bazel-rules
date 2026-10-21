@@ -61,7 +61,7 @@ def quarkifier_targets(minor, maven_repo):
 
     java_binary(
         name = bin_name,
-        main_class = "com.clementguillot.quarkifier.QuarkifierLauncher",
+        main_class = "io.quarkus.quarkifier.QuarkifierLauncher",
         visibility = ["//visibility:public"],
         runtime_deps = [":" + lib_name],
     )
@@ -71,7 +71,7 @@ def quarkifier_targets(minor, maven_repo):
         srcs = native.glob(["src/test/java/**/*.java"]),
         args = [
             "execute",
-            "--select-package=com.clementguillot.quarkifier",
+            "--select-package=io.quarkus.quarkifier",
             "--fail-if-no-tests",
         ],
         main_class = "org.junit.platform.console.ConsoleLauncher",
