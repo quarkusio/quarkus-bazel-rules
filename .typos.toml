@@ -5,6 +5,8 @@ vertx = "vertx"
 ser = "ser"
 # jline ships a real `org.jline.nativ` Java package (pinned in lock files).
 nativ = "nativ"
+# in-toto attestation files (`*.intoto.jsonl`) produced by the release workflow.
+intoto = "intoto"
 
 [default]
 extend-ignore-re = [
