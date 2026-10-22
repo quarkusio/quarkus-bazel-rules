@@ -1,5 +1,5 @@
 load("@rules_java//java:java_library.bzl", "java_library")
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_test")
+load("@quarkus//:defs.bzl", "quarkus_test")
 
 java_library(
     name = "lib",

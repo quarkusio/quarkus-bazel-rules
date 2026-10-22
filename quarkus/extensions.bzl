@@ -5,13 +5,17 @@ descriptors and resolves their declared deployment artifacts automatically.
 The quarkifier deploy jar is downloaded from GitHub releases or overridden
 with a local build.
 
-Produces a single generated repository (@rules_quarkus) containing:
-  - quarkus/defs.bzl: public API macros (quarkus_app, quarkus_test, quarkus_integration_test)
+Produces a single generated repository (@quarkus) containing:
+  - defs.bzl: public API macros (quarkus_app, quarkus_test, quarkus_integration_test)
   - quarkifier/: the quarkifier tool jar
   - deployment/: deployment jars resolved via Coursier
 """
 
 load("//quarkus/private:versions.bzl", "COURSIER_SHA256", "COURSIER_URL", "GITHUB_OWNER", "GITHUB_REPO", "MAVEN_CENTRAL", "QUARKIFIER_SHA256", "RULES_VERSION", "SUPPORTED_VERSIONS")
+
+# Name of the generated repository, imported with use_repo(quarkus, "quarkus").
+# It cannot be "rules_quarkus": that is the module's own repository name.
+_GENERATED_REPO_NAME = "quarkus"
 
 _DEFAULT_EXTENSION_GROUP_PREFIXES = ["io.quarkus", "io.quarkiverse."]
 
@@ -1382,13 +1386,13 @@ def _write_deployment_catalog(rctx, resolution, repo_paths):
 
 deployment_catalog_for_test = _deployment_catalog
 
-# ---- Generated @rules_quarkus//quarkus:defs.bzl ----
+# ---- Generated @quarkus//:defs.bzl ----
 
 _DEFS_BZL_TEMPLATE = """\
 \"\"\"Public API — load Quarkus application, test, and extension macros from here.
 
     load(
-        "@rules_quarkus//quarkus:defs.bzl",
+        "@quarkus//:defs.bzl",
         "quarkus_app",
         "quarkus_codegen",
         "quarkus_extension_runtime",
@@ -1407,29 +1411,29 @@ quarkus_extension_runtime() wraps a local Quarkus extension runtime module;
 depend on that runtime target from application code and the deployment side is
 added to Quarkus augmentation automatically.
 \"\"\"
-load("@com_clementguillot_rules_quarkus//quarkus/private:quarkus_app_impl.bzl", "quarkus_app_rule")
-load("@com_clementguillot_rules_quarkus//quarkus/private:quarkus_codegen_impl.bzl", "quarkus_codegen_root_rule", "quarkus_codegen_rule")
-load("@com_clementguillot_rules_quarkus//quarkus/private:quarkus_dev_impl.bzl", "quarkus_continuous_test_rule", "quarkus_dev_rule")
-load("@com_clementguillot_rules_quarkus//quarkus/private:quarkus_extension_impl.bzl", "quarkus_extension_runtime_rule")
-load("@com_clementguillot_rules_quarkus//quarkus/private:quarkus_native_app_impl.bzl", "quarkus_native_app_rule")
-load("@com_clementguillot_rules_quarkus//quarkus/private:quarkus_native_container_app_impl.bzl", "quarkus_native_container_app_rule")
-load("@com_clementguillot_rules_quarkus//quarkus/private:continuous_test.bzl", _quarkus_continuous_test_aggregate = "quarkus_continuous_test_aggregate")
-load("@com_clementguillot_rules_quarkus//quarkus/private:quarkus_test_impl.bzl", _quarkus_integration_test = "quarkus_integration_test", _quarkus_test = "quarkus_test", _test_resources_without_sources_error = "test_resources_without_sources_error")
+load("@rules_quarkus//quarkus/private:quarkus_app_impl.bzl", "quarkus_app_rule")
+load("@rules_quarkus//quarkus/private:quarkus_codegen_impl.bzl", "quarkus_codegen_root_rule", "quarkus_codegen_rule")
+load("@rules_quarkus//quarkus/private:quarkus_dev_impl.bzl", "quarkus_continuous_test_rule", "quarkus_dev_rule")
+load("@rules_quarkus//quarkus/private:quarkus_extension_impl.bzl", "quarkus_extension_runtime_rule")
+load("@rules_quarkus//quarkus/private:quarkus_native_app_impl.bzl", "quarkus_native_app_rule")
+load("@rules_quarkus//quarkus/private:quarkus_native_container_app_impl.bzl", "quarkus_native_container_app_rule")
+load("@rules_quarkus//quarkus/private:continuous_test.bzl", _quarkus_continuous_test_aggregate = "quarkus_continuous_test_aggregate")
+load("@rules_quarkus//quarkus/private:quarkus_test_impl.bzl", _quarkus_integration_test = "quarkus_integration_test", _quarkus_test = "quarkus_test", _test_resources_without_sources_error = "test_resources_without_sources_error")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@com_clementguillot_rules_quarkus//quarkus/private:versions.bzl", "DEFAULT_NATIVE_BUILDER_IMAGE")
+load("@rules_quarkus//quarkus/private:versions.bzl", "DEFAULT_NATIVE_BUILDER_IMAGE")
 load("@rules_java//java:java_library.bzl", "java_library")
 
 _QUARKUS_VERSION = "{version}"
-_QUARKIFIER_TOOL = "@rules_quarkus//quarkifier:tool.jar"
-_DEPLOYMENT_DEPS = "@rules_quarkus//deployment:all"
-_DEPLOYMENT_ARTIFACTS = "@rules_quarkus//deployment:artifacts"
-_CORE_DEPLOYMENT_DEPS = "@rules_quarkus//deployment:core"
-_CONDITIONAL_DEPS = "@rules_quarkus//conditional:all"
-_CONDITIONAL_CATALOG = "@rules_quarkus//model:conditional-catalog-v1.json"
-_DEPLOYMENT_CATALOG = "@rules_quarkus//model:deployment-catalog-v1.json"
-_RUNTIME_CATALOG = "@rules_quarkus//model:runtime-catalog-v1.json"
-_PLATFORM_CATALOG = "@rules_quarkus//model:platform-catalog-v1.json"
-_PLATFORM_PROPERTIES = "@rules_quarkus//model:platform_properties"
+_QUARKIFIER_TOOL = Label("//quarkifier:tool.jar")
+_DEPLOYMENT_DEPS = Label("//deployment:all")
+_DEPLOYMENT_ARTIFACTS = Label("//deployment:artifacts")
+_CORE_DEPLOYMENT_DEPS = Label("//deployment:core")
+_CONDITIONAL_DEPS = Label("//conditional:all")
+_CONDITIONAL_CATALOG = Label("//model:conditional-catalog-v1.json")
+_DEPLOYMENT_CATALOG = Label("//model:deployment-catalog-v1.json")
+_RUNTIME_CATALOG = Label("//model:runtime-catalog-v1.json")
+_PLATFORM_CATALOG = Label("//model:platform-catalog-v1.json")
+_PLATFORM_PROPERTIES = Label("//model:platform_properties")
 _TEST_INFRASTRUCTURE_DEPS = [
     "@maven//:org_hamcrest_hamcrest",
     "@maven//:org_junit_jupiter_junit_jupiter",
@@ -1895,10 +1899,10 @@ def quarkus_extension_runtime(name, group_id, version, runtime_target, deploymen
 # ---- Repository rule ----
 
 def _rules_quarkus_repo_impl(rctx):
-    """Creates the unified @rules_quarkus repository.
+    """Creates the unified @quarkus repository.
 
     Contains:
-      - quarkus/defs.bzl: public macros
+      - defs.bzl: public macros
       - quarkifier/tool.jar: the quarkifier deploy jar
       - deployment/: java_library targets for deployment jars
     """
@@ -1956,16 +1960,12 @@ def _rules_quarkus_repo_impl(rctx):
 
     rctx.file("BUILD.bazel", content = """\
 package(default_visibility = ["//visibility:public"])
+exports_files(["defs.bzl"])
 """)
 
     rctx.file("quarkifier/BUILD.bazel", content = """\
 package(default_visibility = ["//visibility:public"])
 exports_files(["tool.jar"])
-""")
-
-    rctx.file("quarkus/BUILD.bazel", content = """\
-package(default_visibility = ["//visibility:public"])
-exports_files(["defs.bzl"])
 """)
 
     rctx.file("model/BUILD.bazel", content = """\
@@ -1983,7 +1983,7 @@ filegroup(name = "platform_properties", srcs = glob(["platform-properties/**/*.p
 filegroup(name = "runtime_catalog", srcs = ["runtime-catalog-v1.json"])
 """)
 
-    rctx.file("quarkus/defs.bzl", content = _DEFS_BZL_TEMPLATE.format(version = rctx.attr.quarkus_version))
+    rctx.file("defs.bzl", content = _DEFS_BZL_TEMPLATE.format(version = rctx.attr.quarkus_version))
 
 _rules_quarkus_repo = repository_rule(
     implementation = _rules_quarkus_repo_impl,
@@ -2031,7 +2031,7 @@ def _quarkifier_repo_attrs(tc, minor):
 
 def _quarkus_impl(mctx):
     # Collect toolchain tags from every module, root module first: the root's
-    # choice wins, but a single fixed @rules_quarkus repo means only one
+    # choice wins, but a single fixed @quarkus repo means only one
     # Quarkus version per workspace — conflicting requests must fail loudly
     # instead of silently using whichever tag happens to come first.
     root_tags = []
@@ -2060,7 +2060,7 @@ def _quarkus_impl(mctx):
     minor = _validate_version(version)
 
     repo_attrs = {
-        "name": "rules_quarkus",
+        "name": _GENERATED_REPO_NAME,
         "quarkus_version": version,
         "platform_boms": tc.platform_boms or ["io.quarkus.platform:quarkus-bom:" + version],
         "platform_properties": tc.platform_properties,
@@ -2107,7 +2107,7 @@ the hash to pin when verification is disabled.
 Label pointing to a file in the rules_quarkus source directory. The parent
 directory is used to build the quarkifier deploy jar locally.
 Used for local development and e2e testing.
-Example: '@com_clementguillot_rules_quarkus//:MODULE.bazel'
+Example: '@rules_quarkus//:MODULE.bazel'
 """,
         ),
         "quarkus_version": attr.string(

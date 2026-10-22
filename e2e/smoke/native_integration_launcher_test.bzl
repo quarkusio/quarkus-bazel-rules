@@ -1,7 +1,7 @@
 """Lightweight coverage for native quarkus_integration_test launcher wiring."""
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
-load("@com_clementguillot_rules_quarkus//quarkus:providers.bzl", "QuarkusNativeInfo")
+load("@rules_quarkus//quarkus:providers.bzl", "QuarkusNativeInfo")
 
 def _fake_native_app_impl(ctx):
     binary = ctx.actions.declare_file(ctx.label.name)

@@ -1,4 +1,4 @@
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_java_library")
+load("@quarkus//:defs.bzl", "quarkus_java_library")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 # Two independent CodeGenProvider families in ONE generation action: gRPC reads

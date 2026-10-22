@@ -190,7 +190,7 @@ quarkus_native_app_rule = rule(
     toolchains = [_GVM_TOOLCHAIN_TYPE] + use_cpp_toolchain(),
     fragments = ["cpp"],
     doc = """\
-Internal rule — use quarkus_app(native=True) macro from @rules_quarkus//quarkus:defs.bzl instead.
+Internal rule — use quarkus_app(native=True) macro from @quarkus//:defs.bzl instead.
 
 Requires the @rules_graalvm GraalVM toolchain to be registered by the user.
 """,

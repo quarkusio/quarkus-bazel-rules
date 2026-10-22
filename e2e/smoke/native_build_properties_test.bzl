@@ -1,6 +1,6 @@
 """Manual real-native coverage for declared build properties."""
 
-load("@com_clementguillot_rules_quarkus//quarkus:providers.bzl", "QuarkusNativeInfo")
+load("@rules_quarkus//quarkus:providers.bzl", "QuarkusNativeInfo")
 
 def _native_build_properties_test_impl(ctx):
     native_sources = ctx.attr.target[QuarkusNativeInfo].native_sources_dir

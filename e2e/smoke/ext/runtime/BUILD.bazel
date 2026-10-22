@@ -1,7 +1,7 @@
+load("@quarkus//:defs.bzl", "quarkus_extension_runtime")
 load("@rules_java//java:java_library.bzl", "java_library")
 load("@rules_java//java:java_plugin.bzl", "java_plugin")
 load("@rules_jvm_external//:defs.bzl", "java_export")
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_extension_runtime")
 
 package(default_visibility = ["//visibility:public"])
 

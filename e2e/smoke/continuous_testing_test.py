@@ -128,7 +128,7 @@ def prepare(workspace):
     empty_glob = workspace / "emptyglob"
     empty_glob.mkdir(exist_ok=True)
     (empty_glob / "BUILD.bazel").write_text(
-        'load("@rules_quarkus//quarkus:defs.bzl", "quarkus_test")\n'
+        'load("@quarkus//:defs.bzl", "quarkus_test")\n'
         'quarkus_test(\n'
         '    name = "test",\n'
         '    srcs = glob(["src/test/java/**/*.java"], allow_empty = True),\n'
@@ -143,7 +143,7 @@ def prepare(workspace):
             'java_library(name = "lib", srcs = ["Independent.java"], visibility = ["//visibility:public"])\n'
         ),
         "moduletests": (
-            'load("@rules_quarkus//quarkus:defs.bzl", "quarkus_test")\n'
+            'load("@quarkus//:defs.bzl", "quarkus_test")\n'
             'quarkus_test(name = "test", test_packages = ["submodule"], deps = ["//submodule:tests"],'
             ' visibility = ["//visibility:public"])\n'
         ),
@@ -165,7 +165,7 @@ def prepare(workspace):
     }.items():
         (workspace / package).mkdir(exist_ok=True)
         (workspace / package / "BUILD.bazel").write_text(
-            'load("@rules_quarkus//quarkus:defs.bzl", "quarkus_app")\n'
+            'load("@quarkus//:defs.bzl", "quarkus_app")\n'
             f'quarkus_app(name="app", {arguments})\n'
         )
     (workspace / "tests").mkdir(exist_ok=True)
