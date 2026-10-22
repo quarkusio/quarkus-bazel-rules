@@ -48,26 +48,21 @@ This means that any usage of `@rules_quarkus` on your system will point to this 
 
 ## Releasing
 
-Releases are automated on a cron trigger.
-The new version is determined automatically from the commit history, assuming the commit messages follow conventions, using
-https://github.com/marketplace/actions/conventional-commits-versioner-action.
-If you do nothing, eventually the newest commits will be released automatically as a patch or minor release.
-This automation is defined in .github/workflows/tag.yaml.
-
-Rather than wait for the cron event, you can trigger manually. Navigate to
-https://github.com/clementguillot/rules_quarkus/actions/workflows/tag.yaml
-and press the "Run workflow" button.
-
-If you need control over the next release version, for example when making a release candidate for a new major,
-then: tag the repo and push the tag, for example
+Releases are cut by pushing a `vX.Y.Z` tag. Choose the version from the commit
+history, which follows [Conventional Commits](https://www.conventionalcommits.org/):
+a `fix` a patch release, a `feat` makes a minor release, and a breaking change
+(`!`) a major release.
 
 ```sh
-% git fetch
-% git tag v1.0.0-rc0 origin/main
-% git push origin v1.0.0-rc0
+git fetch
+git tag v1.2.3 origin/main
+git push origin v1.2.3
 ```
 
-Then watch the automation run on GitHub actions which creates the release.
+The tag triggers `.github/workflows/release.yaml`, which builds the release
+artifacts, creates the GitHub release, and opens a pull request on the
+[Bazel Central Registry](https://registry.bazel.build/). Release candidates work
+the same way, for example `v1.0.0-rc0`.
 
 ## Architecture Reference
 

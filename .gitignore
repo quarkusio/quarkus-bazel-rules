@@ -1,4 +1,6 @@
 bazel-*
+# Adapted copies of bazel-contrib workflows, not Bazel output symlinks.
+!/.github/workflows/bazel-contrib_*.yaml
 .bazelrc.user
 .idea/
 .ijwb/
