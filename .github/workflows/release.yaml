@@ -1,16 +1,6 @@
 # Cut a release whenever a new tag is pushed to the repo.
 name: Release
 on:
-  # Can be triggered from the tag.yaml workflow
-  workflow_call:
-    inputs:
-      tag_name:
-        required: true
-        type: string
-    secrets:
-      publish_token:
-        required: true
-  # Or, developers can manually push a tag from their clone
   push:
     tags:
       - "v*.*.*"
@@ -20,7 +10,7 @@ permissions:
   contents: write
 jobs:
   release:
-    uses: bazel-contrib/.github/.github/workflows/release_ruleset.yaml@v7.7.0
+    uses: ./.github/workflows/bazel-contrib_release_ruleset_adapted.yaml
     with:
       # The quarkifier jars are built by release_prep.sh in the same run that
       # assembles the source archive, so the archive's QUARKIFIER_SHA256 map
@@ -29,11 +19,11 @@ jobs:
         rules_quarkus-*.tar.gz
         quarkifier-*.jar
       prerelease: false
-      tag_name: ${{ inputs.tag_name || github.ref_name }}
+      tag_name: ${{ github.ref_name }}
   publish:
     needs: release
     uses: ./.github/workflows/publish.yaml
     with:
-      tag_name: ${{ inputs.tag_name || github.ref_name }}
+      tag_name: ${{ github.ref_name }}
     secrets:
-      publish_token: ${{ secrets.publish_token || secrets.BCR_PUBLISH_TOKEN }}
+      publish_token: ${{ secrets.BCR_PUBLISH_TOKEN }}

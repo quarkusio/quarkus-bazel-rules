@@ -18,8 +18,11 @@ repos:
       - id: check-yaml
       - id: destroyed-symlinks
       - id: detect-private-key
+      # Copies of bazel-contrib workflows keep upstream text so they stay easy to diff.
       - id: end-of-file-fixer
+        exclude: ^\.github/workflows/bazel-contrib_.*\.yaml$
       - id: trailing-whitespace
+        exclude: ^\.github/workflows/bazel-contrib_.*\.yaml$
   # Check formatting and lint for starlark code
   - repo: https://github.com/keith/pre-commit-buildifier
     rev: 8.5.1
@@ -47,9 +50,12 @@ repos:
       - id: yamlfmt
         exclude: |
           (?x)^(
-            .bcr/config.yml
+            .bcr/config.yml|
+            # Keep upstream formatting so copies stay easy to diff.
+            .github/workflows/bazel-contrib_.*\.yaml
           )
   - repo: https://github.com/crate-ci/typos
     rev: v1.48.0
     hooks:
       - id: typos
+        exclude: ^\.github/workflows/bazel-contrib_.*\.yaml$
