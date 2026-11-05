@@ -21,7 +21,7 @@ rules_quarkus/
 ├── quarkifier/               # Java augmentation tool
 │   ├── BUILD.bazel           # Build targets (lib, binary, tests)
 │   └── src/
-│       ├── main/java/com/clementguillot/quarkifier/
+│       ├── main/java/io/quarkus/quarkifier/
 │       │   ├── QuarkifierLauncher.java
 │       │   ├── QuarkifierConfig.java
 │       │   ├── augmentation/AugmentationExecutor.java
@@ -32,7 +32,7 @@ rules_quarkus/
 │       │   └── ...
 │       ├── main/resources_3_33/  # Targeted Quarkus version for the 3.33 jar
 │       ├── main/resources_3_40/  # Targeted Quarkus version for the 3.40 jar
-│       └── test/java/com/clementguillot/quarkifier/
+│       └── test/java/io/quarkus/quarkifier/
 │           ├── QuarkifierConfigPropertyTest.java   # Property-based test
 │           ├── TestDataGenerator.java              # Random data for PBTs
 │           └── ...
@@ -102,8 +102,8 @@ bazel run //:helloworld_dev   # Dev mode
 Each example's `MODULE.bazel` uses `local_path_override` to point at the root directory:
 
 ```starlark
-bazel_dep(name = "com_clementguillot_rules_quarkus", version = "0.0.0")
-local_path_override(module_name = "com_clementguillot_rules_quarkus", path = "../..")
+bazel_dep(name = "rules_quarkus", version = "0.0.0")
+local_path_override(module_name = "rules_quarkus", path = "../..")
 ```
 
 And `quarkifier_source_dir` to resolve the local deploy jar:
@@ -112,7 +112,7 @@ And `quarkifier_source_dir` to resolve the local deploy jar:
 quarkus.toolchain(
     quarkus_version = "3.40.1",  # or "3.33.4"
     lock_file = "//:maven_install.json",
-    quarkifier_source_dir = "@com_clementguillot_rules_quarkus//:MODULE.bazel",
+    quarkifier_source_dir = "@rules_quarkus//:MODULE.bazel",
 )
 ```
 
@@ -170,8 +170,8 @@ SUPPORTED_VERSIONS = {
 }
 _RULES_VERSION = "$Format:%(describe:tags=true)$"
 RULES_VERSION = "0.0.0" if _RULES_VERSION.startswith("$Format") else _RULES_VERSION.replace("v", "", 1)
-GITHUB_OWNER = "clementguillot"
-GITHUB_REPO = "rules_quarkus"
+GITHUB_OWNER = "quarkusio"
+GITHUB_REPO = "quarkus-bazel-rules"
 MAVEN_CENTRAL = "https://repo1.maven.org/maven2"
 ```
 

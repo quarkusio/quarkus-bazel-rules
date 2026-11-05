@@ -17,7 +17,7 @@ def prepare_console(workspace):
     invalid_properties = workspace / "invalid_properties"
     invalid_properties.mkdir(exist_ok=True)
     (invalid_properties / "BUILD.bazel").write_text(
-        'load("@rules_quarkus//quarkus:defs.bzl", "quarkus_app", "quarkus_test")\n'
+        'load("@quarkus//:defs.bzl", "quarkus_app", "quarkus_test")\n'
         'quarkus_test(name="one", srcs=[], deps=["//dep:value"], '
         'test_classes=["fixture.FlatTest"], '
         'build_properties={"fixture.property": "one"})\n'
@@ -33,7 +33,7 @@ def prepare_console(workspace):
     }.items():
         (workspace / package).mkdir(exist_ok=True)
         (workspace / package / "BUILD.bazel").write_text(
-            'load("@rules_quarkus//quarkus:defs.bzl", "quarkus_app")\n'
+            'load("@quarkus//:defs.bzl", "quarkus_app")\n'
             f'quarkus_app(name="app", deps=["//dep:value"], {arguments})\n'
         )
 

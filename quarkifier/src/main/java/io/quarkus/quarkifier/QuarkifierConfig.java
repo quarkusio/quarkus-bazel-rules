@@ -1,0 +1,124 @@
+package io.quarkus.quarkifier;
+
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * Immutable configuration for a single augmentation invocation.
+ *
+ * @param applicationClasspath runtime jars
+ * @param coreDeploymentClasspath interactive process infrastructure — Quarkus bootstrap resolvers
+ *     and quarkus-core-deployment transitive closures
+ * @param outputDir directory where the selected package is written
+ * @param resources additional resource paths
+ * @param mode NORMAL, TEST, DEV, CONTINUOUS_TEST, or NATIVE
+ * @param packageType Quarkus JVM package layout (used in NORMAL mode)
+ * @param appName application name for Quarkus startup banner (may be {@code null})
+ * @param mainClass fully-qualified custom main class name annotated with {@code @QuarkusMain} (may
+ *     be {@code null})
+ * @param nativeBuilderImage the native builder image for {@code
+ *     platform.quarkus.native.builder-image} (may be {@code null})
+ * @param sourceDirs source directories for hot-reload in dev mode
+ * @param classesDir mutable directory for .class files in dev mode (may be {@code null})
+ * @param bazelTargets Bazel targets to rebuild on source changes
+ * @param classesOutputDirs bazel-bin output directories containing .class files
+ * @param workspaceDir Bazel workspace root directory for running bazel build (may be {@code null})
+ * @param bazelBuildTimeoutSeconds timeout in seconds for bazel build process (default: 600)
+ * @param bazelCommand bazel binary to invoke for hot-reload builds (default: {@code bazel})
+ * @param bazelBuildArgs extra flags for the hot-reload {@code bazel build}
+ * @param localAppJars local workspace jars to use as application roots
+ * @param buildProperties declared hermetic build-time configuration
+ * @param applicationModel explicit validated Bazel model JSON
+ * @param watchedInputs exact declared inputs watched by the interactive session
+ * @param continuousTesting settings of a Dev UI or console continuous-test session, or {@code null}
+ *     when continuous testing is not configured
+ */
+public record QuarkifierConfig(
+    List<Path> applicationClasspath,
+    List<Path> coreDeploymentClasspath,
+    Path outputDir,
+    List<Path> resources,
+    AugmentationMode mode,
+    JarPackageType packageType,
+    String appName,
+    String mainClass,
+    String nativeBuilderImage,
+    List<Path> sourceDirs,
+    Path classesDir,
+    List<String> bazelTargets,
+    List<Path> classesOutputDirs,
+    Path workspaceDir,
+    long bazelBuildTimeoutSeconds,
+    String bazelCommand,
+    List<String> bazelBuildArgs,
+    List<Path> localAppJars,
+    Map<String, String> buildProperties,
+    Path applicationModel,
+    List<Path> watchedInputs,
+    ContinuousTesting continuousTesting) {
+
+  /**
+   * Pairs each interactive mode with its TEST model: Dev UI testing needs a secondary TEST model
+   * beside the DEV model, while console testing uses the primary model and must not get another.
+   */
+  public QuarkifierConfig {
+    if (continuousTesting == null) {
+      if (mode == AugmentationMode.CONTINUOUS_TEST) {
+        throw new IllegalArgumentException(
+            "CONTINUOUS_TEST mode requires continuous-testing settings");
+      }
+    } else if (mode == AugmentationMode.DEV) {
+      if (continuousTesting.applicationModel() == null) {
+        throw new IllegalArgumentException(
+            "Dev UI continuous testing requires a secondary TEST application model");
+      }
+    } else if (mode == AugmentationMode.CONTINUOUS_TEST) {
+      if (continuousTesting.applicationModel() != null) {
+        throw new IllegalArgumentException(
+            "Console continuous testing uses the primary TEST model; a secondary model is invalid");
+      }
+    } else {
+      throw new IllegalArgumentException(
+          "Continuous testing requires DEV or CONTINUOUS_TEST mode, not " + mode);
+    }
+  }
+
+  /**
+   * Continuous-testing settings of an interactive session.
+   *
+   * @param applicationModel secondary TEST model in dev mode; {@code null} when the TEST model is
+   *     primary
+   * @param classesDir mutable directory for compiled tests and their resources
+   * @param classesOutputDirs bazel-bin outputs containing compiled test classes
+   * @param watchedInputs exact inputs only the continuous-test graph declares; changing them reruns
+   *     tests without restarting the application
+   * @param watchedBuildFiles BUILD files whose changes require a session restart
+   * @param jvmArgs JVM flags for the test child process
+   */
+  public record ContinuousTesting(
+      Path applicationModel,
+      Path classesDir,
+      List<Path> classesOutputDirs,
+      List<Path> watchedInputs,
+      List<Path> watchedBuildFiles,
+      List<String> jvmArgs) {
+
+    public ContinuousTesting {
+      Objects.requireNonNull(classesDir, "classesDir");
+      classesOutputDirs = List.copyOf(classesOutputDirs);
+      watchedInputs = List.copyOf(watchedInputs);
+      watchedBuildFiles = List.copyOf(watchedBuildFiles);
+      jvmArgs = List.copyOf(jvmArgs);
+    }
+
+    /**
+     * Private, source-free test source directory used to wake Quarkus continuous testing after a
+     * completed Bazel sync.
+     */
+    public Path reloadNotificationDir() {
+      return classesDir.toAbsolutePath().getParent().resolve("reload-notifications");
+    }
+  }
+}

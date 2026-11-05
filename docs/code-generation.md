@@ -18,7 +18,7 @@ dependencies (including `exports` and `runtime_deps`), resources, `testonly`,
 and `resource_strip_prefix` values for generation:
 
 ```starlark
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_java_library")
+load("@quarkus//:defs.bzl", "quarkus_java_library")
 
 quarkus_java_library(
     name = "messages",
@@ -125,7 +125,7 @@ Use `quarkus_codegen` when composing generation with a custom Java rule:
 
 ```starlark
 load("@rules_java//java:java_library.bzl", "java_library")
-load("@rules_quarkus//quarkus:defs.bzl", "quarkus_codegen")
+load("@quarkus//:defs.bzl", "quarkus_codegen")
 
 quarkus_codegen(
     name = "generated",

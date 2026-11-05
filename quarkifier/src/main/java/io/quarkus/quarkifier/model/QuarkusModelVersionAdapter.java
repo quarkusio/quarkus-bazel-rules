@@ -1,0 +1,68 @@
+package io.quarkus.quarkifier.model;
+
+import io.quarkus.bootstrap.app.ApplicationModelSerializer;
+import io.quarkus.bootstrap.model.ApplicationModel;
+import io.quarkus.bootstrap.model.PlatformImports;
+import io.quarkus.maven.dependency.Dependency;
+import io.quarkus.maven.dependency.DependencyFlags;
+import io.quarkus.maven.dependency.ResolvedDependency;
+import io.quarkus.maven.dependency.ResolvedDependencyBuilder;
+import io.quarkus.quarkifier.model.transport.BazelApplicationModel.Platform;
+import io.quarkus.quarkifier.model.transport.BazelArtifactCoordinates;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+/**
+ * Quarkus application-model API calls that have changed across minors, kept in one place so a
+ * future minor can diverge without touching the model builders.
+ */
+@SuppressWarnings("PMD.UnusedPrivateMethod")
+final class QuarkusModelVersionAdapter {
+
+  private QuarkusModelVersionAdapter() {}
+
+  static void setDirectDependencies(
+      ResolvedDependencyBuilder dependency, List<Dependency> directDependencies) {
+    dependency.setDirectDependencies(directDependencies);
+  }
+
+  static boolean isMissingFromApplication(ResolvedDependency dependency) {
+    return dependency.isFlagSet(DependencyFlags.MISSING_FROM_APPLICATION);
+  }
+
+  static void serialize(ApplicationModel model, Path output) throws IOException {
+    ApplicationModelSerializer.serialize(model, output);
+  }
+
+  static ApplicationModel deserialize(Path input) throws IOException {
+    return ApplicationModelSerializer.deserialize(input);
+  }
+
+  static PlatformImports platformImports(Platform source) {
+    var platformMap = new LinkedHashMap<String, Object>();
+    platformMap.put("platform-properties", source.properties());
+    platformMap.put(
+        "imported-boms",
+        source.imports().stream().map(BazelArtifactCoordinates::canonical).toList());
+    platformMap.put(
+        "release-info",
+        source.releases().stream()
+            .map(
+                release -> {
+                  var releaseMap = new LinkedHashMap<String, Object>();
+                  releaseMap.put("platform-key", release.platformKey());
+                  releaseMap.put("stream", release.stream());
+                  releaseMap.put("version", release.version());
+                  releaseMap.put(
+                      "boms",
+                      release.memberBoms().stream()
+                          .map(BazelArtifactCoordinates::canonical)
+                          .toList());
+                  return releaseMap;
+                })
+            .toList());
+    return PlatformImports.fromMap(platformMap);
+  }
+}
