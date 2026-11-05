@@ -26,6 +26,10 @@ jobs:
       tag_name: ${{ inputs.tag_name }}
       # GitHub repository which is a fork of the upstream where the Pull Request will be opened.
       registry_fork: quarkusio/bazel-central-registry
+      # BCR only trusts attestations signed by the upstream bazel-contrib
+      # reusable workflows. Ours come from the adapted local copies, so BCR's
+      # SLSA verification rejects them.
+      attest: false
       # PR at BCR must be ready because it's opened by a bot.
       draft: false
     permissions:
