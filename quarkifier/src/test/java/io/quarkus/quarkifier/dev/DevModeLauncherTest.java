@@ -261,7 +261,8 @@ class DevModeLauncherTest {
         Path.of("/cache/v1.repo/org/example/parent-first-lib/1.0/parent-first-lib-1.0.jar");
     Path regularJar = Path.of("/cache/v1.repo/org/example/regular-lib/2.0/regular-lib-2.0.jar");
     // Core classpath uses a different jar so parent-first isn't excluded
-    Path coreJar = Path.of("/cache/v1.repo/io/quarkus/quarkus-core/3.40.1/quarkus-core-3.40.1.jar");
+    Path coreJar =
+        Path.of("/cache/v1.repo/io/quarkus/quarkus-core/3.40.1.1/quarkus-core-3.40.1.1.jar");
 
     var config =
         devConfig(

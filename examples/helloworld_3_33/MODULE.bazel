@@ -29,7 +29,7 @@ maven.install(
         "org.junit.platform:junit-platform-launcher:6.0.3",
     ],
     # Mirror pom.xml so Maven and Bazel select the same platform versions.
-    boms = ["io.quarkus.platform:quarkus-bom:3.33.4"],
+    boms = ["io.quarkus.platform:quarkus-bom:3.33.4.1"],
     known_contributing_modules = [
         "bazel_worker_java",
         "protobuf",
@@ -42,6 +42,6 @@ quarkus = use_extension("@rules_quarkus//quarkus:extensions.bzl", "quarkus")
 quarkus.toolchain(
     lock_file = "//:maven_install.json",
     quarkifier_source_dir = "@rules_quarkus//:MODULE.bazel",
-    quarkus_version = "3.33.4",
+    quarkus_version = "3.33.4.1",
 )
 use_repo(quarkus, "quarkus")
