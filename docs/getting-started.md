@@ -20,8 +20,10 @@ bazel_dep(name = "rules_java", version = "9.6.1")
 bazel_dep(name = "rules_jvm_external", version = "6.10")
 
 # Quarkus rules
-bazel_dep(name = "rules_quarkus", version = "0.1.0")
+bazel_dep(name = "rules_quarkus", version = "1.0.0")
 ```
+
+> **Upgrading from 0.x?** The module was renamed from `com_clementguillot_rules_quarkus`. See [Migrating from 0.x to 1.0](migrations/migration-1.0.md).
 
 ## 2. Declare Maven Dependencies
 
