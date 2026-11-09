@@ -4,8 +4,8 @@
 # The quarkifier is compiled against each minor version's APIs independently.
 # Users MUST use one of these exact versions.
 SUPPORTED_VERSIONS = {
-    "3.33": "3.33.4",
-    "3.40": "3.40.1",
+    "3.33": "3.33.4.1",
+    "3.40": "3.40.1.1",
 }
 
 # Version of rules_quarkus itself — must match the version in MODULE.bazel.

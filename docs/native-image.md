@@ -146,8 +146,8 @@ The CC toolchain is resolved hermetically — no `use_default_shell_env` or syst
 
 | Quarkus Version | Required GraalVM | Notes |
 |-----------------|-----------------|-------|
-| 3.33.4 LTS | GraalVM 25+ | Requires a fork of `rules_graalvm` with GraalVM 25 support |
-| 3.40.1 LTS | GraalVM 25+ | Minimum enforced by Quarkus; requires a fork of `rules_graalvm` with GraalVM 25 support |
+| 3.33.4.1 LTS | GraalVM 25+ | Requires a fork of `rules_graalvm` with GraalVM 25 support |
+| 3.40.1.1 LTS | GraalVM 25+ | Minimum enforced by Quarkus; requires a fork of `rules_graalvm` with GraalVM 25 support |
 
 Both lines need the `rules_graalvm` override shown in [Setup](#1-add-rules_graalvm-to-modulebazel).
 

@@ -9,7 +9,7 @@ safe changes. It applies to the entire repository.
 applications. The Starlark rules invoke the Quarkus build API through the Java
 `Quarkifier`; they do not wrap Maven or Gradle.
 
-- Supported Quarkus versions are exactly `3.33.4` and `3.40.1`.
+- Supported Quarkus versions are exactly `3.33.4.1` and `3.40.1.1`.
 - A Bazel workspace selects one Quarkus version; mixed versions in one
   workspace are not supported.
 - Supported Bazel versions are 7, 8, and 9, with Bzlmod only.
