@@ -29,22 +29,22 @@ class FastJarAssemblerTest {
   @Test
   void assembleLibDirectories_classifiesBootAndMainJars() throws IOException {
     Path outputDir = quarkusAppDir();
-    Path bootJar = createJar("io.quarkus", "quarkus-bootstrap-runner", "3.33.4.1");
-    Path mainJar = createJar("io.quarkus", "quarkus-arc", "3.33.4.1");
+    Path bootJar = createJar("io.quarkus", "quarkus-bootstrap-runner", "3.33.4.2");
+    Path mainJar = createJar("io.quarkus", "quarkus-arc", "3.33.4.2");
     ApplicationModel model =
         modelWith(
-            dep("io.quarkus", "quarkus-bootstrap-runner", "3.33.4.1", true),
-            dep("io.quarkus", "quarkus-arc", "3.33.4.1", false));
+            dep("io.quarkus", "quarkus-bootstrap-runner", "3.33.4.2", true),
+            dep("io.quarkus", "quarkus-arc", "3.33.4.2", false));
 
     FastJarAssembler.assembleLibDirectories(outputDir, List.of(bootJar, mainJar), model);
 
     Path quarkusApp = outputDir.resolve("quarkus-app");
     assertTrue(
         Files.exists(
-            quarkusApp.resolve("lib/boot/io.quarkus.quarkus-bootstrap-runner-3.33.4.1.jar")),
+            quarkusApp.resolve("lib/boot/io.quarkus.quarkus-bootstrap-runner-3.33.4.2.jar")),
         "runner-parent-first jar goes to lib/boot");
     assertTrue(
-        Files.exists(quarkusApp.resolve("lib/main/io.quarkus.quarkus-arc-3.33.4.1.jar")),
+        Files.exists(quarkusApp.resolve("lib/main/io.quarkus.quarkus-arc-3.33.4.2.jar")),
         "regular jar goes to lib/main");
   }
 
@@ -52,9 +52,9 @@ class FastJarAssemblerTest {
   void assembleLibDirectories_deduplicatesByGav() throws IOException {
     Path outputDir = quarkusAppDir();
     // Same GAV resolved from two different locations.
-    Path first = createJarAt("first/jars", "io.quarkus", "quarkus-arc", "3.33.4.1");
-    Path second = createJarAt("second/jars", "io.quarkus", "quarkus-arc", "3.33.4.1");
-    ApplicationModel model = modelWith(dep("io.quarkus", "quarkus-arc", "3.33.4.1", false));
+    Path first = createJarAt("first/jars", "io.quarkus", "quarkus-arc", "3.33.4.2");
+    Path second = createJarAt("second/jars", "io.quarkus", "quarkus-arc", "3.33.4.2");
+    ApplicationModel model = modelWith(dep("io.quarkus", "quarkus-arc", "3.33.4.2", false));
 
     FastJarAssembler.assembleLibDirectories(outputDir, List.of(first, second), model);
 
@@ -126,9 +126,9 @@ class FastJarAssemblerTest {
   @Test
   void assembleLibDirectories_excludesIdeLauncher() throws IOException {
     Path outputDir = quarkusAppDir();
-    Path ideJar = createJar("io.quarkus", "quarkus-ide-launcher", "3.33.4.1");
+    Path ideJar = createJar("io.quarkus", "quarkus-ide-launcher", "3.33.4.2");
     ApplicationModel model =
-        modelWith(dep("io.quarkus", "quarkus-ide-launcher", "3.33.4.1", false));
+        modelWith(dep("io.quarkus", "quarkus-ide-launcher", "3.33.4.2", false));
 
     FastJarAssembler.assembleLibDirectories(outputDir, List.of(ideJar), model);
 
@@ -146,17 +146,17 @@ class FastJarAssemblerTest {
     // Write it in a Maven-layout temp dir so MavenCoordinateParser can resolve its GAV.
     Path augmentedJar =
         createJarAt(
-            "lib-stage/io/quarkus/quarkus-arc/3.33.4.1", "io.quarkus", "quarkus-arc", "3.33.4.1");
-    Files.copy(augmentedJar, libMain.resolve("processed_quarkus-arc-3.33.4.1.jar"));
-    ApplicationModel model = modelWith(dep("io.quarkus", "quarkus-arc", "3.33.4.1", false));
+            "lib-stage/io/quarkus/quarkus-arc/3.33.4.2", "io.quarkus", "quarkus-arc", "3.33.4.2");
+    Files.copy(augmentedJar, libMain.resolve("processed_quarkus-arc-3.33.4.2.jar"));
+    ApplicationModel model = modelWith(dep("io.quarkus", "quarkus-arc", "3.33.4.2", false));
 
     FastJarAssembler.assembleLibDirectories(
-        outputDir, List.of(createJar("io.quarkus", "quarkus-arc", "3.33.4.1")), model);
+        outputDir, List.of(createJar("io.quarkus", "quarkus-arc", "3.33.4.2")), model);
 
     assertFalse(
-        Files.exists(libMain.resolve("processed_quarkus-arc-3.33.4.1.jar")),
+        Files.exists(libMain.resolve("processed_quarkus-arc-3.33.4.2.jar")),
         "stale processed_ jar from augmentation must be renamed");
-    assertTrue(Files.exists(libMain.resolve("io.quarkus.quarkus-arc-3.33.4.1.jar")));
+    assertTrue(Files.exists(libMain.resolve("io.quarkus.quarkus-arc-3.33.4.2.jar")));
   }
 
   @Test
@@ -215,21 +215,21 @@ class FastJarAssemblerTest {
     // Augmentation placed this jar in boot, but the model says it belongs in main.
     Path augmentedJar =
         createJarAt(
-            "stage/io/quarkus/quarkus-arc/3.33.4.1", "io.quarkus", "quarkus-arc", "3.33.4.1");
-    Files.copy(augmentedJar, libBoot.resolve("processed_quarkus-arc-3.33.4.1.jar"));
+            "stage/io/quarkus/quarkus-arc/3.33.4.2", "io.quarkus", "quarkus-arc", "3.33.4.2");
+    Files.copy(augmentedJar, libBoot.resolve("processed_quarkus-arc-3.33.4.2.jar"));
 
-    ApplicationModel model = modelWith(dep("io.quarkus", "quarkus-arc", "3.33.4.1", false));
+    ApplicationModel model = modelWith(dep("io.quarkus", "quarkus-arc", "3.33.4.2", false));
 
     FastJarAssembler.assembleLibDirectories(
-        outputDir, List.of(createJar("io.quarkus", "quarkus-arc", "3.33.4.1")), model);
+        outputDir, List.of(createJar("io.quarkus", "quarkus-arc", "3.33.4.2")), model);
 
-    Path expectedTarget = libMain.resolve("io.quarkus.quarkus-arc-3.33.4.1.jar");
+    Path expectedTarget = libMain.resolve("io.quarkus.quarkus-arc-3.33.4.2.jar");
     assertTrue(Files.exists(expectedTarget), "jar must be reclassified from boot to main");
     assertFalse(
-        Files.exists(libBoot.resolve("processed_quarkus-arc-3.33.4.1.jar")),
+        Files.exists(libBoot.resolve("processed_quarkus-arc-3.33.4.2.jar")),
         "original boot location must be vacated");
     assertFalse(
-        Files.exists(libBoot.resolve("io.quarkus.quarkus-arc-3.33.4.1.jar")),
+        Files.exists(libBoot.resolve("io.quarkus.quarkus-arc-3.33.4.2.jar")),
         "jar must not remain in boot under its new name");
   }
 
@@ -285,7 +285,7 @@ class FastJarAssemblerTest {
     Path outputDir = quarkusAppDir();
     Path quarkusApp = outputDir.resolve("quarkus-app");
     Path bootDir = Files.createDirectories(quarkusApp.resolve("lib/boot"));
-    Files.writeString(bootDir.resolve("io.quarkus.quarkus-bootstrap-runner-3.33.4.1.jar"), "x");
+    Files.writeString(bootDir.resolve("io.quarkus.quarkus-bootstrap-runner-3.33.4.2.jar"), "x");
     Files.writeString(bootDir.resolve("org.jboss.logging.jboss-logging-3.6.0.jar"), "x");
     createRunnerJar(quarkusApp.resolve("quarkus-run.jar"));
 
@@ -294,7 +294,7 @@ class FastJarAssemblerTest {
     try (var jar = new JarFile(quarkusApp.resolve("quarkus-run.jar").toFile())) {
       String classPath = jar.getManifest().getMainAttributes().getValue("Class-Path");
       assertEquals(
-          "lib/boot/io.quarkus.quarkus-bootstrap-runner-3.33.4.1.jar"
+          "lib/boot/io.quarkus.quarkus-bootstrap-runner-3.33.4.2.jar"
               + " lib/boot/org.jboss.logging.jboss-logging-3.6.0.jar",
           classPath,
           "boot jars sorted and space-separated");
@@ -321,7 +321,7 @@ class FastJarAssemblerTest {
     Path datFile = quarkusApp.resolve("quarkus/quarkus-application.dat");
     Files.write(datFile, new byte[] {0});
     Path bootDir = Files.createDirectories(quarkusApp.resolve("lib/boot"));
-    writeEmptyJar(bootDir.resolve("io.quarkus.quarkus-bootstrap-runner-3.33.4.1.jar"));
+    writeEmptyJar(bootDir.resolve("io.quarkus.quarkus-bootstrap-runner-3.33.4.2.jar"));
 
     FastJarAssembler.regenerateApplicationDat(outputDir, "com.example.Main");
 
