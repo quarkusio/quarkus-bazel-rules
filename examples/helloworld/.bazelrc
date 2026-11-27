@@ -18,3 +18,5 @@ common --java_runtime_version=remotejdk_21
 # The version of JVM used to execute tools that are needed during a build.
 # See https://bazel.build/docs/user-manual#tool-java-runtime-version
 common --tool_java_runtime_version=remotejdk_21
+
+common --repo_env=ANDROID_HOME=

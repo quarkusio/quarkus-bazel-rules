@@ -19,11 +19,11 @@ load("//quarkus/private:versions.bzl", "DEFAULT_NATIVE_BUILDER_IMAGE")
 
 # Container runtime auto-detection is backported from Quarkus
 # ContainerRuntimeUtil.java. Inside the container, the args file ends with
-# "<app_name>-runner -jar <runner>.jar" (Quarkus 3.33) or
-# "-o <app_name>-runner -jar <runner>.jar" (Quarkus 3.40+): the output-name
-# token, and its -o flag when present, is removed and
-# replaced by -o with the mounted output path, and monitoring options that may
-# be incompatible with the builder image's GraalVM version are stripped.
+# "-o <app_name>-runner -jar <runner>.jar". Quarkus 4 writes every argument
+# double-quoted (argument-file quoting); the unquoted forms are still matched.
+# The output-name token and its -o flag are removed and replaced by -o with the
+# mounted output path, and monitoring options that may be incompatible with the
+# builder image's GraalVM version are stripped.
 _CONTAINER_BUILD_SCRIPT = """
 set -euo pipefail
 
@@ -109,7 +109,13 @@ $RUNTIME run --rm "${{USER_ARGS[@]}}" --entrypoint bash \\
   -c '
     mkdir -p /tmp/work && cd /tmp/work &&
     cp -a /project-src/. . &&
-    sed -e "s| -o {app_name}-runner -jar | -jar |" -e "s| {app_name}-runner -jar | -jar |" -e "s|--enable-monitoring=[^ ]*||g" native-image.args > /tmp/work/native-image.args.rewritten &&
+    sed \\
+      -e "s| \\"-o\\" \\"{app_name}-runner\\" \\"-jar\\" | \\"-jar\\" |" \\
+      -e "s|\\"--enable-monitoring=[^\\"]*\\"||g" \\
+      -e "s| -o {app_name}-runner -jar | -jar |" \\
+      -e "s| {app_name}-runner -jar | -jar |" \\
+      -e "s|--enable-monitoring=[^ ]*||g" \\
+      native-image.args > /tmp/work/native-image.args.rewritten &&
     native-image @/tmp/work/native-image.args.rewritten -o /output/{app_name}
   '
 

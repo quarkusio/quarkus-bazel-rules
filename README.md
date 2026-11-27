@@ -73,12 +73,22 @@ See the [Getting Started guide](docs/getting-started.md) for full setup instruct
 
 ## Supported Versions
 
-- **Quarkus**: `3.33.4.2` (LTS) or `3.40.1.2` (LTS)
+- **Quarkus**: `4.0.1`
 - **Bazel**: 7+, 8+, or 9+
-- **Java**: 17+
+- **Java**: 21+
 - **Mode**: Bzlmod only (WORKSPACE not supported)
 
-> **Important**: You must use one of the exact supported versions listed above (`3.33.4.2` or `3.40.1.2`). Quarkus bytecode generated during augmentation is tightly coupled to the exact patch version — even within the same minor, runtime incompatibilities can occur.
+> **Important**: You must use one of the exact supported versions listed above. Quarkus bytecode generated during augmentation is tightly coupled to the exact patch version — even within the same minor, runtime incompatibilities can occur.
+
+### Release lines
+
+| rules_quarkus | Quarkus | Java | Branch | Status |
+|---|---|---|---|---|
+| 2.x | `4.0.1` | 21+ | `main` | Active development |
+| 1.0.x | `3.33.4.2` (LTS), `3.40.1.2` (LTS) | 17+ | [`1.0`](https://github.com/quarkusio/quarkus-bazel-rules/tree/1.0) | Bug fixes and LTS patch bumps until the Quarkus 3.33 and 3.40 LTS end of life |
+
+Quarkus 3.x applications stay on rules_quarkus 1.0.x. See the
+[2.0 migration guide](docs/migrations/migration-2.0.md) to move to Quarkus 4.
 
 ## Documentation
 

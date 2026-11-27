@@ -7,7 +7,7 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "@maven//:io_quarkus_quarkus_arc",
-        "@maven//:jakarta_enterprise_jakarta_enterprise_cdi_api",
+        "@maven//:jakarta_cdi_jakarta_cdi_api",
     ],
 )
 

@@ -11,7 +11,7 @@ Produces a single generated repository (@quarkus) containing:
   - deployment/: deployment jars resolved via Coursier
 """
 
-load("//quarkus/private:versions.bzl", "COURSIER_SHA256", "COURSIER_URL", "GITHUB_OWNER", "GITHUB_REPO", "MAVEN_CENTRAL", "QUARKIFIER_SHA256", "RULES_VERSION", "SUPPORTED_VERSIONS")
+load("//quarkus/private:versions.bzl", "COURSIER_EXCLUSIONS", "COURSIER_SHA256", "COURSIER_URL", "GITHUB_OWNER", "GITHUB_REPO", "MAVEN_CENTRAL", "QUARKIFIER_SHA256", "RULES_VERSION", "SUPPORTED_VERSIONS")
 
 # Name of the generated repository, imported with use_repo(quarkus, "quarkus").
 # It cannot be "rules_quarkus": that is the module's own repository name.
@@ -36,7 +36,7 @@ _DEPLOYMENT_ARTIFACT_TYPES = _CLASSPATH_ARTIFACT_TYPES + ",exe"
 # ---- Version helpers ----
 
 def _extract_minor_version(version):
-    """Extracts the minor version (e.g. "3.40") from a full version string."""
+    """Extracts the minor version (e.g. "4.0") from a full version string."""
     parts = version.split(".")
     if len(parts) < 2:
         fail("Invalid Quarkus version '{}': expected MAJOR.MINOR.PATCH format".format(version))
@@ -49,7 +49,7 @@ def _validate_version(version):
     version must match the supported patch for its minor exactly.
 
     Returns:
-        The minor version string (e.g. "3.40").
+        The minor version string (e.g. "4.0").
     """
     minor = _extract_minor_version(version)
     supported_list = ", ".join([SUPPORTED_VERSIONS[m] for m in sorted(SUPPORTED_VERSIONS)])
@@ -66,6 +66,10 @@ def _validate_version(version):
             supported_list,
         ))
     return minor
+
+def _coursier_exclusions(version):
+    """Returns the Coursier exclusions for the minor of a full Quarkus version."""
+    return COURSIER_EXCLUSIONS.get(_extract_minor_version(version), [])
 
 def _sanitize_version(minor_version):
     """Replaces dots with underscores for use in Bazel target and repo names."""
@@ -571,13 +575,13 @@ def _resolve_quarkifier_tool(rctx):
 # ---- Deployment jar resolution via Coursier ----
 
 # bin/java of the rules_java-managed remote JDKs, keyed by host platform.
-# These are the same repos --java_runtime_version=remotejdk_17 resolves to,
+# These are the same repos --java_runtime_version=remotejdk_21 resolves to,
 # so when the build already uses a remote JDK no extra download happens.
 _REMOTE_JDK_JAVA = {
-    "linux-aarch64": Label("@remotejdk17_linux_aarch64//:bin/java"),
-    "linux-x86_64": Label("@remotejdk17_linux//:bin/java"),
-    "macos-aarch64": Label("@remotejdk17_macos_aarch64//:bin/java"),
-    "macos-x86_64": Label("@remotejdk17_macos//:bin/java"),
+    "linux-aarch64": Label("@remotejdk21_linux_aarch64//:bin/java"),
+    "linux-x86_64": Label("@remotejdk21_linux//:bin/java"),
+    "macos-aarch64": Label("@remotejdk21_macos_aarch64//:bin/java"),
+    "macos-x86_64": Label("@remotejdk21_macos//:bin/java"),
 }
 
 def _host_platform_key(os):
@@ -598,10 +602,11 @@ def _host_platform_key(os):
         return None
     return platform + "-" + cpu
 
-# The quarkifier is compiled at --java_language_version=17 (tools/java17.bazelrc),
-# so the JVM that runs extension discovery must be at least 17. Coursier itself
-# targets 8, but both run on the JVM _find_java returns, so 17 is the floor.
-_MIN_JAVA_VERSION = 17
+# The quarkifier is compiled at --java_language_version=21 (tools/java21.bazelrc)
+# against Quarkus 4, whose jars target Java 21, so the JVM that runs extension
+# discovery must be at least 21. Coursier itself targets 8, but both run on the
+# JVM _find_java returns, so 21 is the floor.
+_MIN_JAVA_VERSION = 21
 
 def _leading_int(value):
     """Parses the leading digits of `value`, or None when it has none."""
@@ -706,6 +711,7 @@ def _find_java(rctx):
 
 java_major_version_for_test = _java_major_version
 min_java_version_for_test = _MIN_JAVA_VERSION
+coursier_exclusions_for_test = _coursier_exclusions
 
 def _coursier_fetch(rctx, java, artifacts, report_path, forced_versions = [], boms = [], artifact_types = _CLASSPATH_ARTIFACT_TYPES):
     """Runs a batched Coursier fetch.
@@ -716,6 +722,9 @@ def _coursier_fetch(rctx, java, artifacts, report_path, forced_versions = [], bo
     `boms` imports dependency management like a Maven application importing
     its Quarkus platform BOM, so artifacts reached only through extension
     POMs select the platform-managed versions Maven would.
+
+    COURSIER_EXCLUSIONS for the toolchain's minor are always excluded: they
+    work around upstream POMs that Maven tolerates but Coursier rejects.
     """
     args = [
         java,
@@ -733,6 +742,8 @@ def _coursier_fetch(rctx, java, artifacts, report_path, forced_versions = [], bo
         args.extend(["--force-version", forced_version])
     for bom in boms:
         args.extend(["--bom", bom])
+    for exclusion in _coursier_exclusions(rctx.attr.quarkus_version):
+        args.extend(["--exclude", exclusion])
     return rctx.execute(
         args + artifacts,
         timeout = max(300, len(artifacts) * 60),

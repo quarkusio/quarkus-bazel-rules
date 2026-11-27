@@ -53,47 +53,23 @@ bazel_dep(name = "rules_java", version = "9.6.1")
 java_toolchains = use_extension("@rules_java//java:extensions.bzl", "toolchains")
 use_repo(
     java_toolchains,
-    "remotejdk17_linux",
-    "remotejdk17_linux_aarch64",
-    "remotejdk17_macos",
-    "remotejdk17_macos_aarch64",
+    "remotejdk21_linux",
+    "remotejdk21_linux_aarch64",
+    "remotejdk21_macos",
+    "remotejdk21_macos_aarch64",
 )
 
 bazel_dep(name = "rules_jvm_external", version = "6.10", dev_dependency = True)
 
-# Quarkus 3.33 LTS dependencies
+# Quarkus 4.0 dependencies
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven", dev_dependency = True)
 maven.install(
-    name = "maven_3_33",
+    name = "maven_4_0",
     artifacts = [
-        # Quarkifier deps (Quarkus 3.33)
-        "io.quarkus:quarkus-core:3.33.4.2",
-        "io.quarkus:quarkus-core-deployment:3.33.4.2",
-        "io.quarkus.arc:arc:3.33.4.2",
-        # CLI framework
-        "info.picocli:picocli:4.7.7",
-        # Test framework
-        "org.junit.platform:junit-platform-launcher:6.0.3",
-        "org.junit.platform:junit-platform-console-standalone:6.0.3",
-        "org.junit.jupiter:junit-jupiter:6.0.3",
-    ],
-    fetch_sources = True,
-    known_contributing_modules = [
-        "bazel_worker_java",
-        "protobuf",
-    ],
-    lock_file = "//:maven_install_3_33.json",
-)
-use_repo(maven, "maven_3_33")
-
-# Quarkus 3.40 LTS dependencies
-maven.install(
-    name = "maven_3_40",
-    artifacts = [
-        # Quarkifier deps (Quarkus 3.40)
-        "io.quarkus:quarkus-core:3.40.1.2",
-        "io.quarkus:quarkus-core-deployment:3.40.1.2",
-        "io.quarkus.arc:arc:3.40.1.2",
+        # Quarkifier deps (Quarkus 4.0)
+        "io.quarkus:quarkus-core:4.0.1",
+        "io.quarkus:quarkus-core-deployment:4.0.1",
+        "io.quarkus.arc:arc:4.0.1",
         # CLI framework
         "info.picocli:picocli:4.7.7",
         # Test framework
@@ -106,6 +82,6 @@ maven.install(
         "bazel_worker_java",
         "protobuf",
     ],
-    lock_file = "//:maven_install_3_40.json",
+    lock_file = "//:maven_install_4_0.json",
 )
-use_repo(maven, "maven_3_40")
+use_repo(maven, "maven_4_0")

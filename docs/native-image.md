@@ -12,7 +12,7 @@ The `native=True` flag on `quarkus_app` creates a `<name>_native` target that pr
 ## Prerequisites
 
 - **Bazel 7+, 8+, or 9+** with Bzlmod enabled
-- **Java 17+**
+- **Java 21+**
 - **`rules_graalvm`** with a GraalVM distribution registered (provides the `native-image` binary)
 - **C compiler** — provided automatically by Bazel's CC toolchain (Xcode on macOS, gcc on Linux)
 
@@ -20,7 +20,7 @@ The `native=True` flag on `quarkus_app` creates a `<name>_native` target that pr
 
 ### 1. Add rules_graalvm to MODULE.bazel
 
-Quarkus 3.33 and 3.40 target GraalVM 25, and 3.40 rejects older releases. The
+Quarkus 4.0 targets GraalVM 25 and rejects older releases. The
 `rules_graalvm` 0.11.1 release does not ship GraalVM 25 yet, so override it with
 a fork that does until a release with GraalVM 25 support is published. This is
 the configuration `examples/native_image` uses:
@@ -40,7 +40,7 @@ gvm.graalvm(
     name = "graalvm",
     distribution = "ce",
     java_version = "25",
-    version = "25.0.1",
+    version = "25.0.3",
 )
 use_repo(gvm, "graalvm")
 
@@ -146,10 +146,31 @@ The CC toolchain is resolved hermetically — no `use_default_shell_env` or syst
 
 | Quarkus Version | Required GraalVM | Notes |
 |-----------------|-----------------|-------|
-| 3.33.4.2 LTS | GraalVM 25+ | Requires a fork of `rules_graalvm` with GraalVM 25 support |
-| 3.40.1.2 LTS | GraalVM 25+ | Minimum enforced by Quarkus; requires a fork of `rules_graalvm` with GraalVM 25 support |
+| 4.0.1 | Mandrel 25.0.5+ | Quarkus declares GraalVM 25.0.4 as its minimum, but see the known issue below |
 
-Both lines need the `rules_graalvm` override shown in [Setup](#1-add-rules_graalvm-to-modulebazel).
+It needs the `rules_graalvm` override shown in [Setup](#1-add-rules_graalvm-to-modulebazel).
+
+### Known issue: host builds fail with Quarkus 4.0.1
+
+Host compilation (`native = True`) has no working GraalVM distribution with
+Quarkus 4.0.1 yet. Container compilation (`native_container_build = True`) with
+the default Mandrel builder image works.
+
+| GraalVM distribution | Failure |
+|---|---|
+| CE 25.0.1, 25.0.2 and Oracle GraalVM 25.0.4 | `NoSuchMethodError: ... DuringSetupAccessImpl.registerBuildTimeIndyIncludeList` from the generated `io.quarkus.runner.Feature` |
+| CE 25.1.3 and later Innovation releases (tested up to 25.5.5.0.3) | `Class initialization of io.netty.handler.codec.compression.BrotliOptions failed` (`NoClassDefFoundError` for brotli4j) |
+
+The generated feature uses the internal
+`registerBuildTimeIndyIncludeList` API on GraalVM releases older than 25.4; of
+the distributions tested, only Mandrel 25.0.5.1 provides it. GraalVM CE
+publishes only Innovation releases after 25.0.2, and on those Netty's
+`BrotliOptions` becomes reachable and is initialized at build time even though
+brotli4j is absent. `rules_graalvm` does not offer a Mandrel distribution.
+
+Quarkus 4 writes `native-sources/native-image.args` with every argument
+double-quoted, so paths with spaces survive. The native rules rewrite the
+output name in both the quoted form and the older unquoted form.
 
 ## Troubleshooting
 

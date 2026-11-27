@@ -23,8 +23,8 @@ public final class SmokeCodeGenProvider implements CodeGenProvider {
   }
 
   @Override
-  public String inputExtension() {
-    return "hello";
+  public String[] inputExtensions() {
+    return new String[] {"hello"};
   }
 
   @Override

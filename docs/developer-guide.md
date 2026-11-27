@@ -30,15 +30,14 @@ rules_quarkus/
 │       │   ├── model/ExplicitApplicationModelBuilder.java
 │       │   ├── model/transport/       # Strict v1 model and assembler
 │       │   └── ...
-│       ├── main/resources_3_33/  # Targeted Quarkus version for the 3.33 jar
-│       ├── main/resources_3_40/  # Targeted Quarkus version for the 3.40 jar
+│       ├── main/resources_4_0/   # Targeted Quarkus version for the 4.0 jar
 │       └── test/java/io/quarkus/quarkifier/
 │           ├── QuarkifierConfigPropertyTest.java   # Property-based test
 │           ├── TestDataGenerator.java              # Random data for PBTs
 │           └── ...
 ├── examples/                 # Example workspaces
-│   ├── helloworld_3_33/      # Quarkus 3.33 example (legacy LTS)
-│   └── helloworld_3_40/      # Quarkus 3.40 example
+│   ├── helloworld/           # Example on the latest supported Quarkus version
+│   └── ...                   # Feature examples (codegen, extensions, native, OCI, ...)
 ├── e2e/smoke/                # E2E smoke tests (bzlmod, Bazel 7/8/9)
 └── dev/                      # Gazelle and dev tooling
 ```
@@ -48,8 +47,7 @@ rules_quarkus/
 ### Build the quarkifier deploy jar
 
 ```bash
-bazel build //quarkifier:quarkifier_3_33_deploy.jar
-bazel build //quarkifier:quarkifier_3_40_deploy.jar
+bazel build //quarkifier:quarkifier_4_0_deploy.jar
 ```
 
 ### Build everything
@@ -63,8 +61,7 @@ bazel build //...
 ### Quarkifier unit + property tests
 
 ```bash
-bazel test //quarkifier:quarkifier_test_3_33
-bazel test //quarkifier:quarkifier_test_3_40
+bazel test //quarkifier:quarkifier_test_4_0
 ```
 
 ### Smoke test (e2e)
@@ -81,21 +78,11 @@ the module extension end-to-end.
 
 ## Testing with the Examples Workspace
 
-The `examples/` directory contains separate Bazel workspaces per Quarkus version that use `rules_quarkus` via `local_path_override`. They require the deploy jar to be built first:
+The `examples/` directory contains separate Bazel workspaces that use `rules_quarkus` via `local_path_override`. `examples/helloworld` tracks the latest supported Quarkus version; the other examples cover individual features. The module extension builds the quarkifier from source (`quarkifier_source_dir`), and the repository rule needs a Java 21+ JVM on `JAVA_HOME` or `PATH`:
 
 ```bash
-# 1. Build the deploy jar in the root workspace
-bazel build //quarkifier:quarkifier_3_40_deploy.jar
-
-# 2. Run the 3.40 example
-cd examples/helloworld_3_40
-bazel run //:helloworld    # Production mode
-bazel run //:helloworld_dev   # Dev mode
-
-# Or for the legacy 3.33 line:
-bazel build //quarkifier:quarkifier_3_33_deploy.jar
-cd examples/helloworld_3_33
-bazel run //:helloworld    # Production mode
+cd examples/helloworld
+bazel run //:helloworld       # Production mode
 bazel run //:helloworld_dev   # Dev mode
 ```
 
@@ -110,7 +97,7 @@ And `quarkifier_source_dir` to resolve the local deploy jar:
 
 ```starlark
 quarkus.toolchain(
-    quarkus_version = "3.40.1.2",  # or "3.33.4.2"
+    quarkus_version = "4.0.1",
     lock_file = "//:maven_install.json",
     quarkifier_source_dir = "@rules_quarkus//:MODULE.bazel",
 )
@@ -129,7 +116,7 @@ parity check of the Bazel-owned model. The application root is normalized to
 ```bash
 export JAVA_HOME=...   # JDK 21+: ./mvnw compiles the example POMs at release 21
 python3 dev/devui_dependency_parity.py run \
-    --workspace examples/helloworld_3_40 \
+    --workspace examples/helloworld \
     --bazel-target //:helloworld_dev \
     --out-dir /tmp/parity
 ```
@@ -144,7 +131,7 @@ accepts reviewed differences keyed by the SHA-256 of their exact report line.
 
 ## Classloader Isolation in Dev Mode
 
-Dev mode uses the same version-specific deploy jar as production mode, for example `quarkifier_3_33_deploy.jar` or `quarkifier_3_40_deploy.jar`. Classloader isolation is handled at runtime by `DevModeLauncher.createDevJar()`, which filters the manifest classpath to exclude runtime extension JARs (ArC, REST, etc.) and SmallRye Config JARs. Since dev mode spawns a separate child JVM process, the parent process having these JARs on its classpath is irrelevant. See [dev-mode.md](dev-mode.md) for the full explanation.
+Dev mode uses the same version-specific deploy jar as production mode, for example `quarkifier_4_0_deploy.jar`. Classloader isolation is handled at runtime by `DevModeLauncher.createDevJar()`, which filters the manifest classpath to exclude runtime extension JARs (ArC, REST, etc.) and SmallRye Config JARs. Since dev mode spawns a separate child JVM process, the parent process having these JARs on its classpath is irrelevant. See [dev-mode.md](dev-mode.md) for the full explanation.
 
 ## Existing Tests
 
@@ -165,8 +152,14 @@ Defined in `quarkus/private/versions.bzl`:
 ```starlark
 # Dict mapping minor version → supported patch version
 SUPPORTED_VERSIONS = {
-    "3.33": "3.33.4.2",
-    "3.40": "3.40.1.2",
+    "4.0": "4.0.1",
+}
+# Dict mapping minor version → Coursier exclusions for upstream POM defects
+COURSIER_EXCLUSIONS = {
+    "4.0": [
+        "jakarta.enterprise:jakarta.enterprise.cdi-api",
+        "jakarta.enterprise:jakarta.enterprise.lang-model",
+    ],
 }
 _RULES_VERSION = "$Format:%(describe:tags=true)$"
 RULES_VERSION = "0.0.0" if _RULES_VERSION.startswith("$Format") else _RULES_VERSION.replace("v", "", 1)
@@ -184,8 +177,28 @@ MAVEN_CENTRAL = "https://repo1.maven.org/maven2"
 5. Create `src/main/resources_X_Y/quarkifier-version.properties` with the targeted `quarkus.version`. Java sources are shared and compiled against each minor; if a Quarkus API diverges, isolate it behind `ApplicationDatWriter`, `AppModelSerializerStrategy`, or `QuarkusModelVersionAdapter` before adding version-specific sources
 6. Pin the lock file: `REPIN=1 bazel run @maven_X_Y//:pin --lockfile_mode=off`
 7. Build and test: `bazel build //quarkifier:quarkifier_X_Y_deploy.jar && bazel test //quarkifier:quarkifier_test_X_Y`
-8. Create an example workspace under `examples/helloworld_X_Y/`
-9. Test with the example workspace: `cd examples/helloworld_X_Y && bazel run //:helloworld_dev`
+8. If Coursier cannot resolve the new platform (an upstream POM defect that Maven tolerates), add the coordinates to `COURSIER_EXCLUSIONS` for that minor and to the examples' `maven.install(excluded_artifacts = ...)`
+9. If the new minor becomes the latest supported version, move `examples/helloworld` and the other examples to it, and repin their lock files
+10. Test with the example workspace: `cd examples/helloworld && bazel run //:helloworld_dev`
+
+When a minor is dropped, remove its entries everywhere above. Dropping a Quarkus
+major (as 2.0 did with Quarkus 3.x) is a breaking change: bump the rules_quarkus
+major version and `compatibility_level`, and keep the previous line alive on a
+maintenance branch.
+
+## Release lines and backports
+
+| Branch | rules_quarkus | Quarkus | Java |
+|---|---|---|---|
+| `main` | 2.x | 4.x | 21+ |
+| `1.0` | 1.0.x | 3.33/3.40 LTS | 17+ |
+
+The `1.0` branch receives bug fixes, security fixes, and Quarkus LTS patch
+bumps only, until the Quarkus 3.33 and 3.40 LTS end of life. Land a fix on
+`main` first, then open a pull request that cherry-picks it onto `1.0`. CI and
+buildifier run on both branches. To release, tag the branch tip (for example
+`v1.0.2` on `1.0`); `release.yaml` runs on any `v*.*.*` tag and publishes to the
+BCR.
 
 ## Using this as a development dependency of other rules
 

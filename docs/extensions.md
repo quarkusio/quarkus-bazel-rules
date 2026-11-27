@@ -30,12 +30,16 @@ The two modules need the Quarkus extension annotation processor and the deployme
 ```starlark
 maven.install(
     artifacts = [
-        "io.quarkus:quarkus-arc:3.40.1.2",
+        "io.quarkus:quarkus-arc:4.0.1",
         # Extension annotation processor (emits *.list metadata + accessors)
-        "io.quarkus:quarkus-extension-processor:3.40.1.2",
+        "io.quarkus:quarkus-extension-processor:4.0.1",
         # Deployment-module compile deps
-        "io.quarkus:quarkus-arc-deployment:3.40.1.2",
-        "io.quarkus:quarkus-core-deployment:3.40.1.2",
+        "io.quarkus:quarkus-arc-deployment:4.0.1",
+        "io.quarkus:quarkus-core-deployment:4.0.1",
+    ],
+    excluded_artifacts = [
+        "jakarta.enterprise:jakarta.enterprise.cdi-api",
+        "jakarta.enterprise:jakarta.enterprise.lang-model",
     ],
     lock_file = "//:maven_install.json",
 )
@@ -66,7 +70,7 @@ java_library(
         "@maven//:io_quarkus_quarkus_arc",
         "@maven//:io_quarkus_quarkus_core",
         "@maven//:io_smallrye_config_smallrye_config_core",
-        "@maven//:jakarta_enterprise_jakarta_enterprise_cdi_api",
+        "@maven//:jakarta_cdi_jakarta_cdi_api",
     ],
 )
 

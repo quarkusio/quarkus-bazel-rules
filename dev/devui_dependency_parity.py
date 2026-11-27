@@ -15,7 +15,7 @@ the POM coordinates while Bazel uses its workspace identity.
 Usage:
   devui_dependency_parity.py capture --url http://localhost:8080 --out maven.json
   devui_dependency_parity.py diff maven.json bazel.json [--allowlist FILE]
-  devui_dependency_parity.py run --workspace examples/helloworld_3_40 \
+  devui_dependency_parity.py run --workspace examples/helloworld \
       --bazel-target //:helloworld_dev [--maven-args "-pl app -am"] [--out-dir DIR]
 
 `run` starts both dev modes sequentially on free ports, captures each graph,

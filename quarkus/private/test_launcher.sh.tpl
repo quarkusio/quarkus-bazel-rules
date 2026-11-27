@@ -292,7 +292,7 @@ JAVA_ARGS_FILE=$(mktemp)
   --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
   %{build_property_jvm_flags} \
   -Dquarkus-internal-test.serialized-app-model.path="$MODEL_DIR/test-app-model.dat" \
-  -Dplatform.quarkus.native.builder-image=quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25@sha256:4dda6a3d677b57614849557d0d18aac7326c4f30175142b0f1bb91bdcfc5c29a \
+  -Dplatform.quarkus.native.builder-image=quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25@sha256:5f1a539d126a690fcc1212b8a59c39de454a7e768a8519979bc71bc737344384 \
   -Dquarkus.package.jar.type=fast-jar \
   "${TEST_JVM_ARGS[@]}" \
   %{jvm_flags} \

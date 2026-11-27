@@ -9,11 +9,16 @@ safe changes. It applies to the entire repository.
 applications. The Starlark rules invoke the Quarkus build API through the Java
 `Quarkifier`; they do not wrap Maven or Gradle.
 
-- Supported Quarkus versions are exactly `3.33.4.2` and `3.40.1.2`.
+- Supported Quarkus versions are exactly those in `SUPPORTED_VERSIONS`
+  (`quarkus/private/versions.bzl`), currently `4.0.1`. The version matrix
+  machinery (one quarkifier and Maven repository per minor) stays in place even
+  with a single entry.
+- `main` is rules_quarkus 2.x (Quarkus 4). The `1.0` branch maintains 1.0.x for
+  Quarkus `3.33.4.2` and `3.40.1.2` LTS (fixes and LTS patch bumps only).
 - A Bazel workspace selects one Quarkus version; mixed versions in one
   workspace are not supported.
 - Supported Bazel versions are 7, 8, and 9, with Bzlmod only.
-- Java 17 or newer is required.
+- Java 21 or newer is required.
 - The module is `rules_quarkus`. Its extension generates the `@quarkus`
   repository (`use_repo(quarkus, "quarkus")`), which contains the public macros,
   the version-specific Quarkifier, model catalogs, and copied deployment
@@ -129,10 +134,8 @@ Run the narrowest checks that cover the change, then expand for cross-cutting
 work. From the repository root:
 
 ```bash
-bazel build //quarkifier:quarkifier_3_33_deploy.jar
-bazel build //quarkifier:quarkifier_3_40_deploy.jar
-bazel test //quarkifier:quarkifier_test_3_33
-bazel test //quarkifier:quarkifier_test_3_40
+bazel build //quarkifier:quarkifier_4_0_deploy.jar
+bazel test //quarkifier:quarkifier_test_4_0
 bazel build //...
 ```
 
@@ -146,11 +149,12 @@ bazel test //...
 Example workspaces also use `local_path_override` and are useful for manual
 lifecycle checks. Build the matching deploy jar in the root workspace first,
 then run targets such as `//:helloworld`, `//:helloworld_dev`, and the relevant
-tests from `examples/helloworld_3_33` or `examples/helloworld_3_40`.
+tests from `examples/helloworld` (always on the latest supported version).
 
 Quarkifier sources are shared and compiled once per supported minor, so changes
-touching Quarkus APIs must build and pass tests for both quarkifier targets
-unless the behavior is intentionally version-gated. Changes to repository setup or public
+touching Quarkus APIs must build and pass tests for every quarkifier target
+(one per `SUPPORTED_VERSIONS` entry) unless the behavior is intentionally
+version-gated. Changes to repository setup or public
 rules should be checked from an external example or smoke workspace, not only
 with unit tests in the root workspace. Dev-mode changes should be exercised by
 starting the dev target and verifying startup plus hot reload; native changes
@@ -160,6 +164,7 @@ require the corresponding GraalVM or container environment.
 
 Treat a new minor as a coordinated change: update `SUPPORTED_VERSIONS`, add and
 pin its Maven repository and lock file, add versioned Quarkifier library/binary/
-test/static-analysis targets, add its version resources, build and
-test the deploy jar, and add an example workspace. Follow the complete checklist
-in `docs/developer-guide.md`.
+test/static-analysis targets, add its version resources, build and test the
+deploy jar, and move `examples/helloworld` (and the other examples) to it when
+it becomes the latest. Follow the complete checklist in
+`docs/developer-guide.md`.
