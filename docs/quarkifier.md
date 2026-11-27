@@ -3,7 +3,7 @@
 The Quarkifier (`io.quarkus.quarkifier`) is a standalone Java tool that invokes the Quarkus internal build API (`io.quarkus.deployment`) to perform build-time augmentation. It is the core engine behind `rules_quarkus`.
 
 - **Main class**: `io.quarkus.quarkifier.QuarkifierLauncher`
-- **Built against**: Quarkus 3.33.4.2 LTS and 3.40.1.2 LTS
+- **Built against**: Quarkus 4.0.1 (one deploy jar per supported minor)
 
 ## CLI Interface
 
@@ -329,9 +329,9 @@ Extracts `groupId`/`artifactId`/`version` from jar file paths. Handles multiple 
 
 | Format | Example |
 |---|---|
-| Standard Maven repo | `.../io/quarkus/quarkus-arc/3.40.1.2/quarkus-arc-3.40.1.2.jar` |
-| Bazel `processed_` prefix | `.../processed_quarkus-arc-3.40.1.2.jar` |
-| Coursier cache (short) | `jars/quarkus-arc-3.40.1.2.jar` |
+| Standard Maven repo | `.../io/quarkus/quarkus-arc/4.0.1/quarkus-arc-4.0.1.jar` |
+| Bazel `processed_` prefix | `.../processed_quarkus-arc-4.0.1.jar` |
+| Coursier cache (short) | `jars/quarkus-arc-4.0.1.jar` |
 
 Uses stop segments (`external`, `v1`, `https`, `maven`, etc.) to identify where groupId segments begin when walking backwards from the filename.
 

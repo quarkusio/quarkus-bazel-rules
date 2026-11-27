@@ -11,7 +11,7 @@ RUNTIME_DEPS = [
     "@maven//:io_quarkus_quarkus_arc",
     "@maven//:io_quarkus_quarkus_core",
     "@maven//:io_smallrye_config_smallrye_config_core",
-    "@maven//:jakarta_enterprise_jakarta_enterprise_cdi_api",
+    "@maven//:jakarta_cdi_jakarta_cdi_api",
 ]
 
 java_plugin(

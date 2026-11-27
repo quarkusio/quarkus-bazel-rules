@@ -34,8 +34,8 @@ common --lockfile_mode=error
 # rather than user.bazelrc as suggested in the Bazel docs)
 try-import %workspace%/.bazelrc.user
 
-# Load Java 17 toolchain settings. Java 17 is the minimum version supported by Quarkus.
-try-import %workspace%/tools/java17.bazelrc
+# Load Java 21 toolchain settings. Java 21 is the minimum version supported by Quarkus 4.
+try-import %workspace%/tools/java21.bazelrc
 
 # Add linters to `aspect lint` command
 common:lint --aspects=//tools/lint:linters.bzl%pmd

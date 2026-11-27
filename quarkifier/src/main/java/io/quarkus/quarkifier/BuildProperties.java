@@ -27,7 +27,7 @@ public final class BuildProperties {
    */
   public static final String DEFAULT_BUILDER_IMAGE =
       "quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25"
-          + "@sha256:4dda6a3d677b57614849557d0d18aac7326c4f30175142b0f1bb91bdcfc5c29a";
+          + "@sha256:5f1a539d126a690fcc1212b8a59c39de454a7e768a8519979bc71bc737344384";
 
   private BuildProperties() {}
 

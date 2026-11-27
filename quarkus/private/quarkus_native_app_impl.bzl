@@ -20,10 +20,11 @@ load("//quarkus/private:model_assembly.bzl", "assemble_application_model")
 _GVM_TOOLCHAIN_TYPE = "@rules_graalvm//graalvm/toolchain"
 
 # We cd into native-sources/ so that relative paths in the args file resolve
-# correctly. The args file ends with "<output-name> -jar <runner>.jar"
-# (Quarkus 3.33) or "-o <output-name> -jar <runner>.jar" (Quarkus 3.40+): the
-# output-name token, and its -o flag when present, is removed and replaced by
-# -o with the absolute output path. Monitoring options that may be incompatible with the installed
+# correctly. The args file ends with "-o <output-name> -jar <runner>.jar".
+# Quarkus 4 writes every argument double-quoted (argument-file quoting, so
+# paths with spaces survive); the unquoted forms, including the older
+# "<output-name> -jar <runner>.jar", are still matched. The output-name token
+# and its -o flag are removed and replaced by -o with the absolute output path. Monitoring options that may be incompatible with the installed
 # GraalVM version are stripped. The rewritten args are passed via @argfile
 # so the -cp line (one entry per dependency jar) never lands on argv (E2BIG).
 _NATIVE_IMAGE_SCRIPT = """
@@ -38,7 +39,13 @@ case "$CC_PATH" in
 esac
 cd "{native_sources}"
 REWRITTEN_ARGS=$(mktemp)
-sed -e 's| -o {runner_name} -jar | -jar |' -e 's| {runner_name} -jar | -jar |' -e 's|--enable-monitoring=[^ ]*||g' native-image.args > "$REWRITTEN_ARGS"
+sed \\
+  -e 's| "-o" "{runner_name}" "-jar" | "-jar" |' \\
+  -e 's|"--enable-monitoring=[^"]*"||g' \\
+  -e 's| -o {runner_name} -jar | -jar |' \\
+  -e 's| {runner_name} -jar | -jar |' \\
+  -e 's|--enable-monitoring=[^ ]*||g' \\
+  native-image.args > "$REWRITTEN_ARGS"
 exec "$NATIVE_IMAGE" "@$REWRITTEN_ARGS" -H:CCompilerPath="$CC_PATH" -o "$OUTPUT"
 """
 

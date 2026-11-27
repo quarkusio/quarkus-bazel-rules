@@ -1,4 +1,4 @@
-# helloworld_3_33
+# helloworld
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
@@ -16,7 +16,7 @@ You can run your application in dev mode that enables live coding using:
 
 ## Packaging and running the application
 
-With Bazel, every Quarkus 3.33 JVM package layout is directly runnable:
+With Bazel, every Quarkus 4 JVM package layout is directly runnable:
 
 ```shell
 bazel run //:helloworld          # Fast JAR

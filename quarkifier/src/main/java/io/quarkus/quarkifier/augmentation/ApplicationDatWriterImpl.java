@@ -9,7 +9,9 @@ import java.util.List;
 /**
  * Implementation calling the 5-arg {@code SerializedApplication.write()} signature.
  *
- * <p>In 3.33, the deprecated {@code nonExistentSourcePaths} parameter was removed.
+ * <p>In 3.33, the deprecated {@code nonExistentSourcePaths} parameter was removed. Quarkus 4.0
+ * added a 6-arg overload with {@code cracEnabled}; the 5-arg form delegates to it with {@code
+ * false}, matching the default when CRaC is not enabled.
  */
 public final class ApplicationDatWriterImpl implements ApplicationDatWriter {
 

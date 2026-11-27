@@ -5,7 +5,7 @@ This guide walks you through building and running a Quarkus application with Baz
 ## Prerequisites
 
 - **Bazel 7+, 8+, or 9+** with Bzlmod enabled (the default)
-- **Java 17+** (JDK, not just JRE)
+- **Java 21+** (JDK, not just JRE)
 - **Docker** (optional, required for Dev Services)
 
 > **Note**: Only bzlmod is supported. WORKSPACE mode is not supported.
@@ -24,6 +24,8 @@ bazel_dep(name = "rules_quarkus", version = "1.0.0")
 ```
 
 > **Upgrading from 0.x?** The module was renamed from `com_clementguillot_rules_quarkus`. See [Migrating from 0.x to 1.0](migrations/migration-1.0.md).
+>
+> **Upgrading from 1.0.x?** rules_quarkus 2.0 supports Quarkus 4 and Java 21 only. See [Migrating from 1.0 to 2.0](migrations/migration-2.0.md).
 
 ## 2. Declare Maven Dependencies
 
@@ -38,7 +40,11 @@ maven.install(
     ],
     # The platform BOM a Maven project imports supplies the Quarkus versions,
     # so transitive runtime versions match what Maven would select.
-    boms = ["io.quarkus.platform:quarkus-bom:3.40.1.2"],
+    boms = ["io.quarkus.platform:quarkus-bom:4.0.1"],
+    excluded_artifacts = [
+        "jakarta.enterprise:jakarta.enterprise.cdi-api",
+        "jakarta.enterprise:jakarta.enterprise.lang-model",
+    ],
     lock_file = "//:maven_install.json",
 )
 use_repo(maven, "maven")
@@ -49,9 +55,16 @@ Deployment and conditional artifacts are resolved with the toolchain's
 `platform_boms` (the platform BOM by default), mirroring Maven's dependency
 management.
 
-> **Supported versions**: You must use exactly `3.33.4.2` or `3.40.1.2`. These are the only supported patch versions.
+> **Supported versions**: You must use exactly `4.0.1`. Quarkus 3.x applications use rules_quarkus 1.0.x (`3.33.4.2` or `3.40.1.2`).
 >
-> **Known limitation**: a single Bazel workspace can configure only one `quarkus.toolchain()` today. You can choose `3.33.4.2` or `3.40.1.2` per workspace, but you cannot build different Quarkus minor versions side by side in the same workspace yet.
+> **Known limitation**: a single Bazel workspace can configure only one `quarkus.toolchain()` today, so you cannot build different Quarkus minor versions side by side in the same workspace.
+
+> **Quarkus 4 and Coursier**: add `excluded_artifacts = ["jakarta.enterprise:jakarta.enterprise.cdi-api", "jakarta.enterprise:jakarta.enterprise.lang-model"]`
+> to `maven.install`. The CDI 5.0.0 parent POM published under those old
+> coordinates relocates to a non-existent artifact; Maven ignores it but
+> Coursier fails. Quarkus already depends on the `jakarta.cdi` artifacts the
+> old names relocate to, so the exclusion does not change the classpath. The
+> module extension applies the same exclusion to its own resolution.
 
 ## 3. Configure the Quarkus Toolchain
 
@@ -61,7 +74,7 @@ quarkus = use_extension(
     "quarkus",
 )
 quarkus.toolchain(
-    quarkus_version = "3.40.1.2",
+    quarkus_version = "4.0.1",
     lock_file = "//:maven_install.json",
 )
 use_repo(quarkus, "quarkus")
@@ -82,7 +95,7 @@ different `MODULE.bazel` configurations.
 
 | Attribute | Default | Description |
 |---|---|---|
-| `quarkus_version` | (required) | Quarkus version: `"3.33.4.2"` or `"3.40.1.2"` |
+| `quarkus_version` | (required) | Quarkus version: `"4.0.1"` |
 | `lock_file` | `None` | Path to `maven_install.json` for extension auto-discovery |
 | `extension_group_prefixes` | `["io.quarkus", "io.quarkiverse."]` | Deprecated compatibility option; descriptor discovery no longer filters by groupId |
 | `quarkifier_source_dir` | `None` | Label in the rules_quarkus source dir for local dev builds |
@@ -397,11 +410,11 @@ quarkus_app(
 
 | `package_type` | Quarkus | Runner inside the Bazel tree artifact | Purpose |
 |---|---|---|---|
-| `fast-jar` | 3.33, 3.40 | `quarkus-app/quarkus-run.jar` | Recommended indexed production layout |
-| `uber-jar` | 3.33, 3.40 | `quarkus-run.jar` | Single executable JAR |
-| `mutable-jar` | 3.33, 3.40 | `quarkus-app/quarkus-run.jar` | Re-augmentable layout for remote development |
-| `legacy-jar` | 3.33, 3.40 | `quarkus-run.jar` | Deprecated pre-1.12 thin-JAR layout |
-| `aot-jar` | 3.33, 3.40 | `quarkus-app/quarkus-run.jar` | System-classloader layout used for AOT-cache workflows |
+| `fast-jar` | 4.0 | `quarkus-app/quarkus-run.jar` | Recommended indexed production layout |
+| `uber-jar` | 4.0 | `quarkus-run.jar` | Single executable JAR |
+| `mutable-jar` | 4.0 | `quarkus-app/quarkus-run.jar` | Re-augmentable layout for remote development |
+| `legacy-jar` | 4.0 | `quarkus-run.jar` | Deprecated pre-1.12 thin-JAR layout |
+| `aot-jar` | 4.0 | `quarkus-app/quarkus-run.jar` | System-classloader layout used for AOT-cache workflows |
 
 `aot-jar` selects the AOT-compatible package layout. It does not train or
 embed an `app.aot` cache; cache generation remains a separate, JDK-specific
@@ -454,10 +467,10 @@ All transitive dependencies are collected via `JavaInfo` providers and included 
 
 ## Complete MODULE.bazel Example
 
-This is the full `MODULE.bazel` from the `examples/helloworld_3_40` workspace:
+This is the full `MODULE.bazel` from the `examples/helloworld` workspace:
 
 ```starlark
-module(name = "helloworld_3_40")
+module(name = "helloworld")
 
 bazel_dep(name = "rules_quarkus", version = "0.0.0", dev_dependency = True)
 local_path_override(
@@ -483,7 +496,11 @@ maven.install(
         "org.junit.platform:junit-platform-launcher:6.1.3",
     ],
     # Mirror pom.xml so Maven and Bazel select the same platform versions.
-    boms = ["io.quarkus.platform:quarkus-bom:3.40.1.2"],
+    boms = ["io.quarkus.platform:quarkus-bom:4.0.1"],
+    excluded_artifacts = [
+        "jakarta.enterprise:jakarta.enterprise.cdi-api",
+        "jakarta.enterprise:jakarta.enterprise.lang-model",
+    ],
     lock_file = "//:maven_install.json",
 )
 use_repo(maven, "maven")
@@ -491,7 +508,7 @@ use_repo(maven, "maven")
 quarkus = use_extension("@rules_quarkus//quarkus:extensions.bzl", "quarkus")
 quarkus.toolchain(
     lock_file = "//:maven_install.json",
-    quarkus_version = "3.40.1.2",
+    quarkus_version = "4.0.1",
 )
 use_repo(quarkus, "quarkus")
 ```

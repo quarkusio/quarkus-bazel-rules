@@ -1,7 +1,7 @@
 "Unit tests for external model-catalog normalization."
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
-load("//quarkus:extensions.bzl", "conditional_catalog_for_test", "coursier_artifact_for_test", "coursier_report_coordinate_for_test", "deployment_catalog_for_test", "dev_mode_artifacts_for_test", "jar_target_name_for_test", "java_major_version_for_test", "maven_target_name_for_test", "min_java_version_for_test", "runtime_catalog_for_test", "runtime_discovery_artifacts_for_test", "runtime_resolution_roots_for_test")
+load("//quarkus:extensions.bzl", "conditional_catalog_for_test", "coursier_artifact_for_test", "coursier_exclusions_for_test", "coursier_report_coordinate_for_test", "deployment_catalog_for_test", "dev_mode_artifacts_for_test", "jar_target_name_for_test", "java_major_version_for_test", "maven_target_name_for_test", "min_java_version_for_test", "runtime_catalog_for_test", "runtime_discovery_artifacts_for_test", "runtime_resolution_roots_for_test")
 
 def _runtime_catalog_v3_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -290,6 +290,26 @@ def _dev_mode_artifacts_test_impl(ctx):
 
 dev_mode_artifacts_test = unittest.make(_dev_mode_artifacts_test_impl)
 
+def _coursier_exclusions_test_impl(ctx):
+    env = unittest.begin(ctx)
+
+    # Quarkus 4.0 excludes the CDI 4 coordinates whose 5.0.0 parent POM has a
+    # broken relocation that Coursier cannot resolve.
+    asserts.equals(
+        env,
+        [
+            "jakarta.enterprise:jakarta.enterprise.cdi-api",
+            "jakarta.enterprise:jakarta.enterprise.lang-model",
+        ],
+        coursier_exclusions_for_test("4.0.1"),
+    )
+
+    # Minors without an entry get no exclusions.
+    asserts.equals(env, [], coursier_exclusions_for_test("9.9.0"))
+    return unittest.end(env)
+
+coursier_exclusions_test = unittest.make(_coursier_exclusions_test_impl)
+
 def _maven_target_name_test_impl(ctx):
     env = unittest.begin(ctx)
     asserts.equals(
@@ -369,7 +389,7 @@ def _java_major_version_test_impl(ctx):
     ))
 
     # The minimum must stay aligned with the quarkifier's --java_language_version.
-    asserts.equals(env, 17, min_java_version_for_test)
+    asserts.equals(env, 21, min_java_version_for_test)
     return unittest.end(env)
 
 java_major_version_test = unittest.make(_java_major_version_test_impl)
@@ -569,6 +589,7 @@ def model_catalogs_test_suite():
         runtime_discovery_artifacts_test,
         coursier_artifact_test,
         dev_mode_artifacts_test,
+        coursier_exclusions_test,
         maven_target_name_test,
         java_major_version_test,
         deployment_catalog_test,

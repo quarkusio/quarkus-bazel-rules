@@ -4,8 +4,29 @@
 # The quarkifier is compiled against each minor version's APIs independently.
 # Users MUST use one of these exact versions.
 SUPPORTED_VERSIONS = {
-    "3.33": "3.33.4.2",
-    "3.40": "3.40.1.2",
+    "4.0": "4.0.1",
+}
+
+# Maven coordinates (groupId:artifactId) excluded from every Coursier fetch the
+# module extension runs, keyed by minor version like SUPPORTED_VERSIONS.
+#
+# Only for upstream POM defects that Maven tolerates but Coursier does not.
+# Applications need the same entries in their maven.install(excluded_artifacts
+# = [...]) so the lock and the rules' resolution agree. Remove an entry once
+# the upstream POM is fixed.
+#
+# 4.0: jakarta.enterprise:jakarta.enterprise.cdi-parent:5.0.0 relocates to the
+# non-existent jakarta.cdi:jakarta.cdi.parent (the real parent is
+# jakarta.cdi:jakarta.cdi-parent). Maven ignores relocations on parent POMs;
+# Coursier follows it and fails. Both coordinates below are CDI 4 names that
+# the Quarkus 4 BOM manages at 5.0.0 only so that they relocate to
+# jakarta.cdi:jakarta.cdi-api and jakarta.cdi:jakarta.cdi-lang-model-api, which
+# Quarkus already depends on directly. Excluding them yields the same classpath.
+COURSIER_EXCLUSIONS = {
+    "4.0": [
+        "jakarta.enterprise:jakarta.enterprise.cdi-api",
+        "jakarta.enterprise:jakarta.enterprise.lang-model",
+    ],
 }
 
 # Version of rules_quarkus itself — must match the version in MODULE.bazel.
@@ -19,7 +40,7 @@ GITHUB_OWNER = "quarkusio"
 GITHUB_REPO = "quarkus-bazel-rules"
 
 # SHA-256 checksums of the per-minor quarkifier release jars, keyed by minor
-# version (e.g. "3.33").
+# version (e.g. "4.0").
 #
 # Intentionally EMPTY in the git tree: the jar hashes only exist once the
 # release workflow has built the jars. release_prep.sh builds them, computes
@@ -46,7 +67,7 @@ MAVEN_CENTRAL = "https://repo1.maven.org/maven2"
 # different GraalVM versions over time or across machines — poisoning shared
 # remote caches. The digest makes the action key honest; bumping the
 # toolchain is an explicit change here (Renovate understands tag@digest).
-DEFAULT_NATIVE_BUILDER_IMAGE = "quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25@sha256:4dda6a3d677b57614849557d0d18aac7326c4f30175142b0f1bb91bdcfc5c29a"
+DEFAULT_NATIVE_BUILDER_IMAGE = "quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25@sha256:5f1a539d126a690fcc1212b8a59c39de454a7e768a8519979bc71bc737344384"
 
 # Coursier fat JAR, pinned for reproducible deployment artifact resolution.
 COURSIER_VERSION = "2.1.24"

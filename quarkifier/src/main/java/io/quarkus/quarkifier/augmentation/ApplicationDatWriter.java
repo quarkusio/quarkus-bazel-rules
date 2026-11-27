@@ -8,10 +8,10 @@ import java.util.List;
 /**
  * Writer for {@code quarkus-application.dat}.
  *
- * <p>The signature of {@code SerializedApplication.write()} is not stable across Quarkus minors
- * (3.33 removed the deprecated {@code nonExistentSourcePaths} parameter). Every supported minor
- * shares one implementation today; this seam lets a future minor call a different overload
- * directly, avoiding reflection.
+ * <p>The signature of {@code SerializedApplication.write()} is not stable across Quarkus versions
+ * (3.33 removed the deprecated {@code nonExistentSourcePaths} parameter; 4.0 added an overload with
+ * a {@code cracEnabled} flag). Every supported minor shares one implementation today; this seam
+ * lets a future minor call a different overload directly, avoiding reflection.
  */
 public interface ApplicationDatWriter {
 

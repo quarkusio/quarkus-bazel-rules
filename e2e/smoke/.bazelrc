@@ -1,7 +1,7 @@
-common --java_language_version=17
-common --tool_java_language_version=17
-common --java_runtime_version=remotejdk_17
-common --tool_java_runtime_version=remotejdk_17
+common --java_language_version=21
+common --tool_java_language_version=21
+common --java_runtime_version=remotejdk_21
+common --tool_java_runtime_version=remotejdk_21
 
 # Unset ANDROID_HOME to prevent rules_android from trying to configure an
 # Android SDK repository. This workspace does not use Android, but rules_android

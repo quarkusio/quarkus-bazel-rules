@@ -11,7 +11,7 @@ java_library(
         "@maven//:io_quarkus_quarkus_arc",
         "@maven//:io_quarkus_quarkus_rest",
         "@maven//:io_quarkus_quarkus_rest_jackson",
-        "@maven//:jakarta_enterprise_jakarta_enterprise_cdi_api",
+        "@maven//:jakarta_cdi_jakarta_cdi_api",
         "@maven//:jakarta_inject_jakarta_inject_api",
         "@maven//:jakarta_ws_rs_jakarta_ws_rs_api",
     ],
